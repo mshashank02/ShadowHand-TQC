@@ -828,12 +828,24 @@ if __name__ == "__main__":
     replay_buffer_cleanup_paths = set()
     
     if args.resume_model:
-        model = TQC.load(
-            args.resume_model,
-            env=env,
-            device=device,
-            tensorboard_log=run_root,
-        )
+        # SB3 checkpoints persist the original buffer_size.  When resuming
+        # without a saved replay buffer, let the current --num-envs setting
+        # determine the capacity of the newly allocated buffer instead of
+        # recreating the (possibly much larger) capacity from the checkpoint.
+        # A loaded replay buffer owns its own storage, so preserve its size.
+        resume_load_kwargs = {
+            "env": env,
+            "device": device,
+            "tensorboard_log": run_root,
+        }
+        if not args.resume_replay_buffer:
+            resume_load_kwargs["buffer_size"] = hyperparams["buffer_size"]
+            print(
+                "Bufferless resume will rebuild the replay buffer with "
+                f"capacity {hyperparams['buffer_size']:,} for "
+                f"{args.num_envs} environment(s)."
+            )
+        model = TQC.load(args.resume_model, **resume_load_kwargs)
         model.verbose = args.verbose
         print(f"Loaded model checkpoint from: {args.resume_model}")
         if args.resume_replay_buffer:
