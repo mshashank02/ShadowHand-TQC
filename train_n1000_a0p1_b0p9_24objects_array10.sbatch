@@ -8,7 +8,7 @@
 #SBATCH --gpus=1
 #SBATCH --mem=100G
 #SBATCH --time=30:00:00
-#SBATCH --array=0-23%10
+#SBATCH --array=0-23%12
 #SBATCH --output=slurm-%x-%A_%a.out
 #SBATCH --error=slurm-%x-%A_%a.err
 
