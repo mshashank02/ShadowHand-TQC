@@ -1,0 +1,103 @@
+CUDA: True
+NVIDIA GH200 120GB
+[OK] Wrote shared sensors: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/shared_touch_sensors_500_1.071429_0.714286.xml
+     Totals: Np=78 Npx=301 Nt=121 (sum 500)
+# ---- Merge Touch Sites (7:1:1 split + coverage) ----
+Input base:    assets/hand_base.xml
+Input sensors: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/shared_touch_sensors_500_1.071429_0.714286.xml
+Output file:   /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/Sensors_withPos_500_1.071429_0.714286.xml
+
+Per (body, face) site counts:
+  robot0:ffdistal          back : 3
+  robot0:ffdistal          front: 20
+  robot0:ffdistal          left : 1
+  robot0:ffdistal          right: 1
+  robot0:ffmiddle          back : 3
+  robot0:ffmiddle          front: 25
+  robot0:ffmiddle          left : 1
+  robot0:ffmiddle          right: 2
+  robot0:ffproximal        back : 3
+  robot0:ffproximal        front: 24
+  robot0:ffproximal        left : 1
+  robot0:ffproximal        right: 2
+  robot0:lfdistal          back : 3
+  robot0:lfdistal          front: 19
+  robot0:lfdistal          left : 1
+  robot0:lfdistal          right: 1
+  robot0:lfmetacarpal      front: 12
+  robot0:lfmiddle          back : 3
+  robot0:lfmiddle          front: 24
+  robot0:lfmiddle          left : 1
+  robot0:lfmiddle          right: 2
+  robot0:lfproximal        back : 3
+  robot0:lfproximal        front: 24
+  robot0:lfproximal        left : 1
+  robot0:lfproximal        right: 2
+  robot0:mfdistal          back : 3
+  robot0:mfdistal          front: 19
+  robot0:mfdistal          left : 1
+  robot0:mfdistal          right: 1
+  robot0:mfmiddle          back : 3
+  robot0:mfmiddle          front: 24
+  robot0:mfmiddle          left : 1
+  robot0:mfmiddle          right: 2
+  robot0:mfproximal        back : 3
+  robot0:mfproximal        front: 24
+  robot0:mfproximal        left : 1
+  robot0:mfproximal        right: 2
+  robot0:palm              front: 66
+  robot0:rfdistal          back : 3
+  robot0:rfdistal          front: 19
+  robot0:rfdistal          left : 1
+  robot0:rfdistal          right: 1
+  robot0:rfmiddle          back : 3
+  robot0:rfmiddle          front: 24
+  robot0:rfmiddle          left : 1
+  robot0:rfmiddle          right: 2
+  robot0:rfproximal        back : 3
+  robot0:rfproximal        front: 24
+  robot0:rfproximal        left : 1
+  robot0:rfproximal        right: 2
+  robot0:thdistal          back : 3
+  robot0:thdistal          front: 19
+  robot0:thdistal          left : 1
+  robot0:thdistal          right: 1
+  robot0:thmiddle          back : 3
+  robot0:thmiddle          front: 24
+  robot0:thmiddle          left : 1
+  robot0:thmiddle          right: 2
+  robot0:thproximal        back : 3
+  robot0:thproximal        front: 24
+  robot0:thproximal        left : 1
+  robot0:thproximal        right: 2
+[OK] Wrote robot hand with sites: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/Sensors_withPos_500_1.071429_0.714286.xml
+[OK] Copied custom .msh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/obj_size_small_ar_high_macro_low_rough_high_obj_size-small_ar-high_macro-low_rough-high.msh
+[OK] Wrote MSH diagnostics: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/obj_size_small_ar_high_macro_low_rough_high_obj_size-small_ar-high_macro-low_rough-high_msh_diagnostics.json
+[OK] Wrote standalone env: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/manipulate_custom_obj_size_small_ar_high_macro_low_rough_high_touch_sensors_500_1.071429_0.714286.xml
+[OK] Copied asset: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/shared.xml
+[OK] Copied asset: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/custom_obj_size_small_ar_high_macro_low_rough_high_500_1.071429_0.714286/shared_asset.xml
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/wrist.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/F2.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/knuckle.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/TH1_z.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/TH2_z.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/F3.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/palm.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/F1.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/forearm_electric_cvx.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/forearm_electric.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/lfmetacarpal.stl
+[OK] Copied mesh: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/stls/hand/TH3_z.stl
+[OK] Copied texture: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/textures/block_hidden.png
+[OK] Copied texture: /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/textures/block.png
+Starting training with environment: n0500_a0p3_b0p6_obj_size_small_ar_high_macro_low_rough_high_rigid_48env_restart
+Using 48 parallel environments
+Eval frequency: 20000 timesteps
+Total timesteps: 16000000.0
+Using torch device: cuda
+Adjusted buffer size: 12000000
+Using cuda device
+Logging to /work/hdd/bewv/smahesh1/ShadowHand-TQC/generated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/runs/n0500_a0p3_b0p6_obj_size_small_ar_high_macro_low_rough_high_rigid_48env_restart_48env_0/TQC_1
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mn0500_a0p3_b0p6_obj_size_small_ar_high_macro_low_rough_high_rigid_48env_restart[0m at: [34mhttps://wandb.ai/mshashank02-uc-davis/in-hand%20manipulation/runs/hy80s4jp[0m
+[1;34mwandb[0m: Find logs at: [1;35mgenerated/studies/sphere_v1_demo/candidates/n0500_a0p3_b0p6/obj_size_small_ar_high_macro_low_rough_high/rigid_restart_48env/wandb/wandb/run-20260704_063604-hy80s4jp/logs[0m

@@ -1,0 +1,8 @@
+[gh141.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_small_ar_high_macro_low_rough_high_rigid on GPU 2
+[gh141.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_medium_ar_high_macro_low_rough_high_rigid on GPU 1
+[gh141.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_large_ar_low_macro_low_rough_high_rigid on GPU 3
+[gh141.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_large_ar_high_macro_low_rough_high_rigid on GPU 0
+Finished obj_size_large_ar_high_macro_low_rough_high
+Finished obj_size_medium_ar_high_macro_low_rough_high
+Finished obj_size_small_ar_high_macro_low_rough_high
+Finished obj_size_large_ar_low_macro_low_rough_high

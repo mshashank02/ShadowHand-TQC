@@ -1,0 +1,44 @@
+Allocated nodes: gh[038,134,137,145]
+Slurm job id: 2636630
+Node index: 3
+Node host: gh038.hsn.cm.delta.internal.ncsa.edu
+Slurm job id: 2636630
+CUDA_VISIBLE_DEVICES at worker start: 0,1,2,3
+Fri Jul 10 21:56:02 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.71.05              Driver Version: 595.71.05      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GH200 120GB             On  |   00000009:01:00.0 Off |                    0 |
+| N/A   19C    P0             93W /  900W |       0MiB /  97871MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA GH200 120GB             On  |   00000019:01:00.0 Off |                    0 |
+| N/A   20C    P0             86W /  900W |       0MiB /  97871MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA GH200 120GB             On  |   00000029:01:00.0 Off |                    0 |
+| N/A   20C    P0             90W /  900W |       0MiB /  97871MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA GH200 120GB             On  |   00000039:01:00.0 Off |                    0 |
+| N/A   20C    P0             98W /  900W |       0MiB /  97871MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+[gh038.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_small_ar_low_macro_low_rough_high_rigid on GPU 1
+[gh038.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_medium_ar_high_macro_low_rough_low_rigid on GPU 3
+[gh038.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_large_ar_high_macro_low_rough_low_rigid on GPU 2
+[gh038.hsn.cm.delta.internal.ncsa.edu] Starting n0500_a0p5_b0p2_obj_size_medium_ar_low_macro_low_rough_high_rigid on GPU 0
+Node index 3 finished all four jobs with status 0.
+All 16 jobs finished.

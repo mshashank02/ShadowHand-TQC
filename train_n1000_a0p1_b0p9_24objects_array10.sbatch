@@ -8,7 +8,7 @@
 #SBATCH --gpus=1
 #SBATCH --mem=100G
 #SBATCH --time=30:00:00
-#SBATCH --array=0-23%12
+#SBATCH --array=12-23%12
 #SBATCH --output=slurm-%x-%A_%a.out
 #SBATCH --error=slurm-%x-%A_%a.err
 
@@ -98,7 +98,7 @@ python generate_and_train.py \
   --artifact-root "$run_root" \
   --force -- \
   --device cuda \
-  --num-envs 36 \
+  --num-envs 16 \
   --seed 0 \
   --n-timesteps 16000000 \
   --learning-starts 10000 \
