@@ -78,7 +78,7 @@ fi
 # Read the authoritative counter from the model and give a mismatched pair
 # canonical symlink names. ShadowHand_TQC.py can then retain its strict check.
 checkpoint_step=$(python -c \
-  'import sys; from sb3_contrib import TQC; print(int(TQC.load(sys.argv[1], device="cpu").num_timesteps))' \
+  'import sys; from stable_baselines3.common.save_util import load_from_zip_file; data, _, _ = load_from_zip_file(sys.argv[1], device="cpu"); print(int(data["num_timesteps"]))' \
   "$resume_model" | tail -n 1)
 if [[ ! "$checkpoint_step" =~ ^[0-9]+$ ]]; then
   echo "Could not read a valid internal timestep from ${resume_model}: ${checkpoint_step}" >&2

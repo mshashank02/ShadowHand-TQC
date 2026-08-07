@@ -62,7 +62,7 @@ fi
 # mislabeled, create canonical symlink names so the training script's strict
 # filename-versus-model validation continues to protect W&B history.
 checkpoint_step=$(python -c \
-  'import sys; from sb3_contrib import TQC; print(int(TQC.load(sys.argv[1], device="cpu").num_timesteps))' \
+  'import sys; from stable_baselines3.common.save_util import load_from_zip_file; data, _, _ = load_from_zip_file(sys.argv[1], device="cpu"); print(int(data["num_timesteps"]))' \
   "$resume_model" | tail -n 1)
 if [[ ! "$checkpoint_step" =~ ^[0-9]+$ ]]; then
   echo "Could not read a valid internal timestep from ${resume_model}: ${checkpoint_step}" >&2
