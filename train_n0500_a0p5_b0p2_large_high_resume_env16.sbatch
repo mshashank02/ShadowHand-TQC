@@ -1,10 +1,9 @@
 #!/bin/bash
-# Resume the three crashed/failed rigid-object runs shown in W&B.
-# Each array task discovers the newest complete model/VecNormalize checkpoint
-# and trains the remaining portion of the original 16,000,000-step budget.
-# The replay buffer was not checkpointed, so it is rebuilt during warm-up.
+# Resume n0500_a0p5_b0p2_obj_size_large_ar_high_macro_high_rough_high_rigid.
+# This handles legacy checkpoints whose filename step differs from the global
+# vectorized timestep stored inside the SB3 model.
 #SBATCH --account=bewv-dtai-gh
-#SBATCH --job-name=crashed-resume-env16
+#SBATCH --job-name=n0500-large-high-resume16
 #SBATCH --partition=ghx4
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -12,9 +11,8 @@
 #SBATCH --gpus=1
 #SBATCH --mem=100G
 #SBATCH --time=30:00:00
-#SBATCH --array=0-2%3
-#SBATCH --output=slurm-%x-%A_%a.out
-#SBATCH --error=slurm-%x-%A_%a.err
+#SBATCH --output=slurm-%x-%j.out
+#SBATCH --error=slurm-%x-%j.err
 
 set -euo pipefail
 
@@ -34,21 +32,8 @@ export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
-# candidate_id|object_size|object_id
-CONFIGS=(
-  "n1000_a0p1_b0p9|small|obj_size_small_ar_low_macro_low_rough_low"
-  "n0500_a0p5_b0p2|large|obj_size_large_ar_high_macro_high_rough_high"
-  "n0500_a0p5_b0p2|small|obj_size_small_ar_low_macro_low_rough_low"
-)
-
-array_index=${SLURM_ARRAY_TASK_ID:?This script must be submitted as a Slurm array job}
-if (( array_index < 0 || array_index >= ${#CONFIGS[@]} )); then
-  echo "Invalid array index ${array_index}; expected 0-$(( ${#CONFIGS[@]} - 1 ))" >&2
-  exit 2
-fi
-
-IFS='|' read -r candidate_id object_size object_id <<< "${CONFIGS[$array_index]}"
-
+candidate_id=n0500_a0p5_b0p2
+object_id=obj_size_large_ar_high_macro_high_rough_high
 run_label="${candidate_id}_${object_id}_rigid"
 run_root="generated/studies/sphere_v1_demo/candidates/${candidate_id}/${object_id}/rigid"
 model_root="${run_root}/models/${run_label}"
@@ -73,10 +58,9 @@ if [[ ! -f "$resume_vecnorm" ]]; then
   exit 2
 fi
 
-# Some checkpoints produced by older runs have a per-environment count in the
-# filename even though SB3 stores the global vectorized timestep internally.
-# Read the authoritative counter from the model and give a mismatched pair
-# canonical symlink names. ShadowHand_TQC.py can then retain its strict check.
+# Use the authoritative timestep stored in the model. If this legacy pair is
+# mislabeled, create canonical symlink names so the training script's strict
+# filename-versus-model validation continues to protect W&B history.
 checkpoint_step=$(python -c \
   'import sys; from sb3_contrib import TQC; print(int(TQC.load(sys.argv[1], device="cpu").num_timesteps))' \
   "$resume_model" | tail -n 1)
@@ -116,7 +100,7 @@ if (( remaining_steps <= 0 )); then
 fi
 
 echo "[$(hostname)] Resuming ${run_label}"
-echo "Slurm array job: ${SLURM_ARRAY_JOB_ID:-unknown}_${array_index}"
+echo "Slurm job: ${SLURM_JOB_ID:-unknown}"
 echo "Allocated GPU(s): ${CUDA_VISIBLE_DEVICES:-unset}"
 echo "Checkpoint: ${resume_model} (${checkpoint_step} steps)"
 echo "Remaining training: ${remaining_steps} steps; num-envs: 16"
