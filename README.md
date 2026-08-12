@@ -87,6 +87,74 @@ python generate_and_train.py \
   --num-envs 1 --seed 0 --learning-starts 1000
 ```
 
+### Direct MuJoCo Warp GPU trainer
+
+The CPU/SB3 command above remains the reference path. In a separate environment
+installed from `requirements-gpu.txt`, select the direct batched CUDA path with
+`--trainer gpu`:
+
+```bash
+python generate_and_train.py \
+  --base assets/hand_base.xml \
+  --task study_objects/sphere_study_v1/obj_size-large_ar-high_macro-high_rough-high.msh \
+  --trainer gpu \
+  --physics-mode rigid \
+  --Ntotal 500 --Rppx 1.071429 --Rpt 0.714286 \
+  --out-root generated --force -- \
+  --num-envs 64 --seed 0 \
+  --n-timesteps 16000000 \
+  --auto-replay-capacity \
+  --disable-wandb \
+  --metrics-json generated/gpu_metrics.json
+```
+
+This path is one MJWarp batch with CUDA PyTorch normalization, future HER replay,
+and TQC; it does not use `SubprocVecEnv`, NumPy transitions, or SB3 rollout
+infrastructure. For `--physics-mode rigid`, a custom tetrahedral GMSH object is
+converted deterministically to its validated exterior surface, cached by source hash,
+and emitted as a conventional rigid `<geom type="mesh">` on the existing free body.
+Built-in rigid geoms use the same backend. `--physics-mode deformable` retains the
+existing flex representation and remains excluded from production GPU training.
+Generated rigid candidates include `rigid_object_representation.json` so the source,
+conversion hash, dimensions, mass/inertia, and contact mapping remain auditable.
+
+Replay memory is preflighted before allocation. The default one-million-transition
+capacity is too large for N=500/N=1000 on many laptop GPUs; either request an
+explicit smaller `--buffer-size` or opt in to the recorded hardware-dependent choice
+with `--auto-replay-capacity`. Full replay checkpoints are also opt-in via
+`--save-replay-buffer`; compact resumes gather at least one new complete episode
+before HER updates restart.
+
+Run the steady complete-loop tuner before using automatic world-count selection:
+
+```bash
+python benchmark_training.py \
+  --xml generated/.../manipulate_block_touch_sensors_500_....xml \
+  --worlds 16,64,128 \
+  --output generated/.../complete_loop_benchmark.json
+
+python train_gpu.py \
+  --xml-path generated/.../manipulate_block_touch_sensors_500_....xml \
+  --auto-num-envs \
+  --auto-num-envs-report generated/.../complete_loop_benchmark.json \
+  --auto-replay-capacity
+```
+
+The report is accepted only when it was measured with `benchmark_training.py` for
+the exact same XML, has zero capacity-overflow flags, and includes valid capacity
+high-water measurements. Auto-tuning imports the benchmarked contacts-per-world and
+constraints-per-world allocation as well as the fastest world count; explicit values
+for those three options are therefore superseded when `--auto-num-envs` is active.
+Selection is based on complete-loop transitions per second, not raw simulator
+throughput. See `GPU_MIGRATION.md` and
+`GPU_MIGRATION_STATUS.md` for parity evidence, benchmark protocol, and limitations.
+
+The GPU trainer automatically uses `round(num_envs / 6)` gradient updates per batched
+policy step. This preserves the current six-environment SB3 reference rate of one
+update per six collected transitions; `--gradient-steps` is available only for an
+intentional override. Auto-tuning reports produced with the old one-update-per-batch
+protocol are rejected.
+
 Deformable egg training:
 
 ```bash
@@ -144,7 +212,7 @@ Flags after `--` are forwarded directly to `ShadowHand_TQC.py` and control RL tr
 |---|---|---:|---|
 | `--base` | Base hand XML used to place touch sites on the Shadow Hand | Yes | Uses `assets/hand_base.xml` as the geometry/source for sensor-site placement |
 | `--task block|egg|pen` | Use built-in task template | Yes | Chooses template env XML: block/egg/pen |
-| `--task /path/to/object.msh` | Use a custom mesh object | Yes | Replaces default task object with custom `.msh` `flexcomp` in generated env |
+| `--task /path/to/object.msh` | Use a custom mesh object | Yes | Uses a cached exterior-surface rigid mesh geom by default; `--deformable` retains the GMSH flex path |
 | `--deformable` | Treat supported object as deformable | Yes | Switches custom `.msh` objects or built-in `egg` to deformable `flexcomp` and applies the stable deformable simulation settings below |
 | `--Ntotal` | Total number of touch sensors | Yes | Total sensors allocated across palm, phalanges, and tips |
 | `--Rppx` | Palm-to-phalanges ratio control | Yes | Controls allocation of sensors between palm and non-tip phalanges |
@@ -159,13 +227,76 @@ Flags after `--` are forwarded directly to `ShadowHand_TQC.py` and control RL tr
 | `--object-id` | Stable identifier for object | No direct physics effect | Used in names, artifact paths, and metrics metadata |
 | `--run-label` | Stable run label | No direct physics effect | Used for `env_id`, W&B naming, and artifact naming |
 | `--candidate-id` | Candidate identifier | No direct physics effect | Used in metrics/logging metadata |
-| `--physics-mode rigid\|deformable` | Metadata tag | No direct XML effect by itself | Forwarded into metrics/logging; actual deformable behavior comes from `--deformable` |
+| `--physics-mode rigid\|deformable` | Object collision representation | Yes | Selects cached rigid mesh-geom conversion or the existing deformable flex path; conflicting `--deformable` input fails closed |
+| `--rigid-mesh-cache` | Shared converted-surface cache | Indirectly | Reuses a source-hash/converter-version OBJ across tactile candidates |
 | `--object-size small\|medium\|large` | Object size label override | Yes | Scales object mesh size, radius, mass, inertia, and spawn height |
 | `--force` | Regenerate outputs even if cached | Indirectly | Rewrites generated candidate env/assets |
+| `--trainer cpu\|gpu` | Training implementation | No | Keeps the SB3 CPU reference by default or selects direct rigid-geom MJWarp/CUDA training |
+
+### Study correction: requested versus effective sensor allocation
+
+A sensor-allocation mapping bug was found during the initial candidate runs for the
+`sphere_v1_demo` study, before the first GPBO-proposed candidate was run. The study
+mapping converted requested `(alpha, beta)` values into intended integer counts and
+then into count ratios:
+
+```text
+intended_palm     = round(alpha * N)
+intended_tips     = round(beta * (N - intended_palm))
+intended_phalanx  = N - intended_palm - intended_tips
+
+Rppx = intended_palm / intended_phalanx
+Rpt  = intended_palm / intended_tips
+```
+
+The XML generator subsequently interpreted `Rppx` and `Rpt` as *density* ratios in
+an area-weighted formula using `Ap=6557`, `Apx=26885`, and `At=7193`:
+
+```text
+Dp = N / (Ap + Apx/Rppx + At/Rpt)
+
+actual_palm     = Dp * Ap
+actual_phalanx  = Dp * Apx / Rppx
+actual_tips     = Dp * At / Rpt
+```
+
+Thus candidate names record requested coordinates, while their XMLs contain a
+different realized allocation. Counts below were verified by locally regenerating
+and counting every `<touch>` element in the corresponding sensor XML:
+
+| Existing candidate ID | Intended P/Px/T | Realized P/Px/T | Requested α | Requested β | Effective α | Effective β |
+|---|---:|---:|---:|---:|---:|---:|
+| `n0500_a0p3_b0p6` | 150 / 140 / 210 | **78 / 301 / 121** | 0.300 | 0.600 | **0.1560** | **0.2867** |
+| `n1000_a0p1_b0p9` | 100 / 90 / 810 | **74 / 272 / 654** | 0.100 | 0.900 | **0.0740** | **0.7063** |
+| `n0500_a0p5_b0p2` | 250 / 200 / 50 | **111 / 365 / 24** | 0.500 | 0.200 | **0.2220** | **0.0617** |
+| `n0200_a0p7_b0p5` | 140 / 30 / 30 | **95 / 83 / 22** | 0.700 | 0.500 | **0.4750** | **0.2095** |
+
+Effective coordinates are reconstructed from the XML counts as:
+
+```text
+effective_alpha = actual_palm / N
+effective_beta  = actual_tips / (N - actual_palm)
+```
+
+The completed initialization runs remain observations of the actual XMLs and can be
+used as irregular initialization points in effective `(alpha, beta)` space. Preserve
+the original candidate ID for provenance, but store and report requested coordinates,
+realized counts, effective coordinates, and the XML path/hash separately. Before
+fitting GPBO, audit every initialization XML and treat duplicate realized
+`(N, palm, phalanx, tips)` allocations as replicates.
+
+Do **not** feed an effective `(alpha, beta)` pair back through the old count-ratio
+mapping, since that repeats the bug. Future GPBO proposals must either pass exact
+group counts directly or convert intended counts to area-adjusted density ratios:
+
+```text
+Rppx = (palm / Ap) / (phalanx / Apx)
+Rpt  = (palm / Ap) / (tips / At)
+```
 
 ### Object Size Mapping
 
-| Size | Mesh Scale | Flex Radius | Deformable Spawn Z | Rigid Spawn Z |
+| Size | Mesh Scale | Deformable Flex Radius | Deformable Spawn Z | Rigid Spawn Z |
 |---|---|---:|---:|---:|
 | `small` | `0.75x` | `0.00075` | `0.15` | `0.36` |
 | `medium` | `1.0x` | `0.001` | `0.17` | `0.40` |
@@ -175,7 +306,7 @@ Flags after `--` are forwarded directly to `ShadowHand_TQC.py` and control RL tr
 
 | Case | Parameter | Value |
 |---|---|---|
-| Rigid custom mesh | `flexcomp rigid` | `true` |
+| Rigid custom mesh | exterior surface `<mesh>` + rigid `<geom type="mesh">` | not applicable (`nflex=0`) |
 | Deformable custom mesh | `flexcomp rigid` | `false` |
 | Medium rigid base mass | `mass` | `0.5` |
 | Medium deformable base mass | `mass` | `0.5` |
@@ -227,11 +358,13 @@ These are copied from `assets/shared.xml` into standalone generated candidates.
 
 ### Training Flags Forwarded After `--`
 
-These flags are parsed by `ShadowHand_TQC.py`, not by the generator.
+These flags are parsed by `ShadowHand_TQC.py` for `--trainer cpu` and by
+`train_gpu.py` for `--trainer gpu`, not by the generator. `--trainer cpu|gpu` is also
+recognized after `--` for compatibility with study `trainer_args` lists.
 
 | Training Flag | Meaning | Effect |
 |---|---|---|
-| `--num-envs` | Number of parallel envs | Creates that many `SubprocVecEnv` workers |
+| `--num-envs` | Number of parallel envs/worlds | CPU creates VecEnv workers; GPU creates one batched MJWarp allocation |
 | `--seed` | Random seed | Used for env reset seeds and model seed |
 | `--learning-starts` | Warmup before learning | TQC learning start step |
 | `--n-timesteps` | Total training steps | Total training horizon |
@@ -262,6 +395,13 @@ These flags are parsed by `ShadowHand_TQC.py`, not by the generator.
 | `--target-position` | Goal position behavior | `random` or `ignore` |
 | `--ignore-z-rot` | Ignore z-axis rotation error | Used for pen-style tasks |
 | `--action-scale` | Optional debug scale applied before actuator mapping | Default `1.0`; keep full range for normal training |
+
+GPU-only additions include `--auto-replay-capacity`,
+`--replay-memory-fraction`, `--contacts-per-world`,
+`--constraints-per-world`, `--checkpoint-freq`, `--resume`,
+`--auto-num-envs`, and `--auto-num-envs-report`. GPU evaluation is deterministic
+and does not record video; `--disable-eval-video` is accepted as a compatibility
+no-op.
 
 Periodic checkpoints are compact by default: `model_<step>_steps.zip` and
 `vecnorm_<step>.pkl` are sufficient to resume. When `--resume-model` uses that
@@ -315,6 +455,15 @@ Notes:
 - These values assume a machine may run one training process per free GPU at the same time.
 - If a host is only running one job instead of one job per GPU, you can increase `--num-envs` further.
 - This is a more aggressive recommendation than a conservative cluster-sharing setup; if you observe CPU saturation or slowdown, reduce `--num-envs` by a few on that host.
+
+These host values apply only to CPU `SubprocVecEnv` jobs. Distributed direct-GPU
+studies use `optimize_dataset_gpbo.py --trainer gpu`, require rigid-only
+`native_task` or `msh_file` manifest rows, and require an explicitly benchmarked
+MJWarp allocation or a matching complete-loop auto-tuning report. Rigid custom
+`.msh` rows use the validated cached surface conversion; deformable rows remain
+CPU-only flex models. The worker emits the same metrics contract for either backend,
+so Sobol/GPBO code is unchanged. See
+`DISTRIBUTED_TRAINING.md` for the fail-closed rules and command example.
 
 ## Common Runtime Note: Contact Limit
 

@@ -43,6 +43,62 @@ Review [cluster_hosts.yaml](/home/mshashank02/ShadowHand-TQC/cluster_hosts.yaml)
 - `work_root`
 
 The worker launcher will inject `--num-envs` from this file unless you explicitly override it in trainer args.
+Those host values are CPU `SubprocVecEnv` sizing hints. They are deliberately not
+used for direct GPU jobs because a safe MJWarp world/contact/constraint allocation
+must come from complete-loop measurement on the target GPU and XML.
+
+## Rigid-geom GPU studies
+
+The distributed pipeline remains CPU by default. Direct GPU jobs are opt-in with
+`--trainer gpu` and are accepted only when all of the following are true:
+
+- both Sobol and BO physics-mode lists are `rigid`;
+- every manifest row uses either a built-in `native_task` (`block`, `egg`, or
+  `pen`) or a valid tetrahedral GMSH `msh_file` that can pass rigid-surface
+  conversion;
+- trainer arguments provide either a complete explicit world/contact/constraint
+  allocation or `--auto-num-envs` plus a matching complete-loop report;
+- replay uses `--auto-replay-capacity` or an explicit safe `--buffer-size`.
+
+Rigid custom-mesh rows are converted once per source to a deterministic, validated
+exterior OBJ cache and emitted as conventional rigid mesh geoms. The cache key is
+independent of `(N, alpha, beta)`, and each generated candidate records a rigid
+representation manifest. Deformable physics still emits the existing flex model and
+is intentionally rejected by the production GPU backend.
+
+A minimal built-in manifest is:
+
+```csv
+object_id,native_task,base_object,aspect_ratio,size
+builtin_block,block,block,high,medium
+```
+
+The existing sphere-study manifest with `msh_file` rows is also accepted when both
+physics-mode lists are rigid. After measuring the exact generated model on each
+target GPU, a fixed-allocation custom rigid study can be initialized with:
+
+```bash
+python optimize_dataset_gpbo.py \
+  --study-name sphere_rigid_mesh_gpu \
+  --objects-root study_objects/sphere_study_v1 \
+  --cluster-config cluster_hosts.yaml \
+  --expected-base-objects 4 \
+  --trainer gpu \
+  --sobol-physics-modes rigid \
+  --bo-physics-modes rigid \
+  --trainer-args \
+  --num-envs 128 \
+  --contacts-per-world 128 \
+  --constraints-per-world 256 \
+  --auto-replay-capacity
+```
+
+The worker passes `--trainer gpu` to `generate_and_train.py`, keeps the selected GPU
+isolated with `CUDA_VISIBLE_DEVICES`, and consumes the same `metrics.json`/score
+schema as CPU jobs. Sobol, GPBO, aggregation, and ranking do not branch on backend.
+Auto-tuning report paths in trainer args may contain `{artifact_root}`,
+`{candidate_id}`, `{object_id}`, and `{physics_mode}` placeholders; the worker
+expands them per job. Each report must already exist and match that job's exact XML.
 
 ## Step 2: Bootstrap the remote machines
 
@@ -217,7 +273,8 @@ The worker will:
 
 - detect free GPUs
 - claim pending jobs from the coordinator
-- launch training with that host's configured `--num-envs`
+- launch CPU training with that host's configured `--num-envs`, or launch GPU
+  training with the explicitly benchmarked allocation stored in the study spec
 
 ## Step 9: Monitor progress
 

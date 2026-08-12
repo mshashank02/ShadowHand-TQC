@@ -1,0 +1,14 @@
+<mujoco model="native rigid GPU backend test">
+  <option timestep="0.002"/>
+  <worldbody>
+    <geom name="floor" type="plane" size="1 1 0.1"/>
+    <body name="object" pos="0 0 0.2">
+      <freejoint name="object:joint"/>
+      <geom name="object_geom" type="sphere" size="0.05" mass="1"/>
+      <site name="robot0:TS_native_site" type="sphere" size="0.05"/>
+    </body>
+  </worldbody>
+  <sensor>
+    <touch name="robot0:TS_native" site="robot0:TS_native_site"/>
+  </sensor>
+</mujoco>

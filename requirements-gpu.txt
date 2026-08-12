@@ -1,0 +1,7 @@
+# Install in a new environment; do not overlay the MuJoCo 3.3 CPU reference env.
+-r requirements.txt
+
+mujoco==3.11.0
+mujoco-warp==3.11.0
+warp-lang==1.16.0
+torch>=2.4,<3

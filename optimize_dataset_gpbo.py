@@ -29,6 +29,7 @@ from study_queue import StudyQueue
 
 
 VALID_PHYSICS_MODES = ("deformable", "rigid")
+VALID_TRAINERS = ("cpu", "gpu")
 
 
 def parse_physics_modes(raw_value: str, flag_name: str) -> List[str]:
@@ -65,6 +66,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bo-candidates", type=int, default=4)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--eval-episodes", type=int, default=50)
+    parser.add_argument(
+        "--trainer",
+        choices=VALID_TRAINERS,
+        default="cpu",
+        help=(
+            "Training implementation stored with queued jobs. GPU supports rigid-only "
+            "native tasks and custom meshes converted to native rigid mesh geoms."
+        ),
+    )
     parser.add_argument("--heartbeat-timeout-seconds", type=int, default=900)
     parser.add_argument("--loop-sleep-seconds", type=int, default=60)
     parser.add_argument("--expected-base-objects", type=int, default=6)
@@ -99,6 +109,60 @@ def row_to_candidate(row) -> Candidate:
     return Candidate(candidate_id=row["candidate_id"], N=int(row["N"]), alpha=float(row["alpha"]), beta=float(row["beta"]))
 
 
+def _has_trainer_opt(option: str, trainer_args: Sequence[str]) -> bool:
+    return option in trainer_args or any(
+        str(argument).startswith(option + "=") for argument in trainer_args
+    )
+
+
+def validate_study_trainer(
+    trainer: str,
+    *,
+    study_objects,
+    sobol_physics_modes: Sequence[str],
+    bo_physics_modes: Sequence[str],
+    trainer_args: Sequence[str],
+) -> None:
+    """Fail before enqueueing a scientifically unsupported GPU study."""
+    if _has_trainer_opt("--trainer", trainer_args):
+        raise ValueError(
+            "Select the study trainer with top-level --trainer, not inside "
+            "--trainer-args."
+        )
+    if trainer not in VALID_TRAINERS:
+        raise ValueError(f"trainer must be one of {VALID_TRAINERS}; got {trainer!r}.")
+    if trainer == "cpu":
+        return
+
+    all_modes = set(sobol_physics_modes) | set(bo_physics_modes)
+    if all_modes != {"rigid"}:
+        raise ValueError(
+            "GPU studies are rigid-geom-only; set both --sobol-physics-modes and "
+            "--bo-physics-modes to rigid."
+        )
+
+    auto_worlds = _has_trainer_opt("--auto-num-envs", trainer_args)
+    if auto_worlds:
+        if not _has_trainer_opt("--auto-num-envs-report", trainer_args):
+            raise ValueError("GPU --auto-num-envs requires --auto-num-envs-report.")
+    elif not all(
+        _has_trainer_opt(option, trainer_args)
+        for option in ("--num-envs", "--contacts-per-world", "--constraints-per-world")
+    ):
+        raise ValueError(
+            "GPU studies require either --auto-num-envs with its report or explicit "
+            "--num-envs, --contacts-per-world, and --constraints-per-world. CPU host "
+            "num_envs_per_job values are not GPU capacity recommendations."
+        )
+    if not (
+        _has_trainer_opt("--auto-replay-capacity", trainer_args)
+        or _has_trainer_opt("--buffer-size", trainer_args)
+    ):
+        raise ValueError(
+            "GPU studies require --auto-replay-capacity or an explicit --buffer-size."
+        )
+
+
 def initialize_study(
     queue: StudyQueue,
     args: argparse.Namespace,
@@ -129,6 +193,7 @@ def initialize_study(
             "repo_root": str(repo_root),
             "seed": int(args.seed),
             "eval_episodes": int(args.eval_episodes),
+            "trainer": args.trainer,
             "force": bool(args.force),
             "trainer_args": trainer_args,
             "init_candidates": int(args.init_candidates),
@@ -142,6 +207,9 @@ def initialize_study(
         queue.set_metadata("study_spec", spec)
     else:
         updated = False
+        if "trainer" not in spec:
+            spec["trainer"] = "cpu"
+            updated = True
         if "sobol_physics_modes" not in spec:
             spec["sobol_physics_modes"] = parse_physics_modes(args.sobol_physics_modes, "--sobol-physics-modes")
             updated = True
@@ -150,6 +218,13 @@ def initialize_study(
             updated = True
         if updated:
             queue.set_metadata("study_spec", spec)
+    validate_study_trainer(
+        str(spec["trainer"]),
+        study_objects=study_objects,
+        sobol_physics_modes=physics_modes_for_source(spec, "sobol"),
+        bo_physics_modes=physics_modes_for_source(spec, "bo"),
+        trainer_args=spec["trainer_args"],
+    )
     return spec
 
 
@@ -160,6 +235,7 @@ def build_jobs_for_candidate(
     objects_root_relpath: str,
     base_xml_relpath: str,
     trainer_args: Sequence[str],
+    trainer: str,
     seed: int,
     eval_episodes: int,
     force: bool,
@@ -186,9 +262,15 @@ def build_jobs_for_candidate(
                 "aspect_ratio": obj.aspect_ratio,
                 "size": obj.size,
                 "physics_mode": physics_mode,
+                "trainer": trainer,
                 "seed": int(seed),
                 "base_xml_relpath": base_xml_relpath,
-                "object_msh_relpath": os.path.join(objects_root_relpath, obj.msh_file),
+                "task_arg": (
+                    obj.native_task
+                    if obj.native_task is not None
+                    else os.path.join(objects_root_relpath, obj.msh_file)
+                ),
+                "task_kind": "native" if obj.native_task is not None else "mesh",
                 "artifact_relpath": artifact_relpath,
                 "metrics_relpath": os.path.join(artifact_relpath, "metrics.json"),
                 "stdout_relpath": os.path.join(artifact_relpath, "stdout.txt"),
@@ -207,11 +289,11 @@ def build_jobs_for_candidate(
                     "base_object": obj.base_object,
                     "aspect_ratio": obj.aspect_ratio,
                     "size": obj.size,
-                "seed": int(seed),
-                "priority": 0 if physics_mode == "deformable" else 1,
-                "artifact_relpath": artifact_relpath,
-                "metrics_relpath": payload["metrics_relpath"],
-                "stdout_relpath": payload["stdout_relpath"],
+                    "seed": int(seed),
+                    "priority": 0 if physics_mode == "deformable" else 1,
+                    "artifact_relpath": artifact_relpath,
+                    "metrics_relpath": payload["metrics_relpath"],
+                    "stdout_relpath": payload["stdout_relpath"],
                     "stderr_relpath": payload["stderr_relpath"],
                     "payload": payload,
                 }
@@ -347,6 +429,7 @@ def backfill_missing_candidate_jobs(
             objects_root_relpath=spec["objects_root_relpath"],
             base_xml_relpath=spec["base_xml_relpath"],
             trainer_args=spec["trainer_args"],
+            trainer=str(spec.get("trainer", "cpu")),
             seed=int(spec["seed"]),
             eval_episodes=int(spec["eval_episodes"]),
             force=bool(spec["force"]),
@@ -448,6 +531,7 @@ def export_reports(queue: StudyQueue, study_root: Path) -> None:
             fieldnames=[
                 "candidate_id",
                 "object_id",
+                "trainer",
                 "physics_mode",
                 "base_object",
                 "aspect_ratio",
@@ -462,12 +546,15 @@ def export_reports(queue: StudyQueue, study_root: Path) -> None:
         for row in queue.conn.execute(
             """
             SELECT candidate_id, object_id, physics_mode, base_object, aspect_ratio, size,
-                   status, score, artifact_relpath, metrics_relpath
+                   status, score, artifact_relpath, metrics_relpath, payload_json
             FROM jobs
             ORDER BY candidate_id, object_id, physics_mode
             """
         ).fetchall():
-            writer.writerow(dict(row))
+            rendered = dict(row)
+            payload = json.loads(rendered.pop("payload_json"))
+            rendered["trainer"] = payload.get("trainer", "cpu")
+            writer.writerow(rendered)
 
 
 def coordinator_iteration(
@@ -505,6 +592,7 @@ def coordinator_iteration(
                 objects_root_relpath=spec["objects_root_relpath"],
                 base_xml_relpath=spec["base_xml_relpath"],
                 trainer_args=spec["trainer_args"],
+                trainer=str(spec.get("trainer", "cpu")),
                 seed=int(spec["seed"]),
                 eval_episodes=int(spec["eval_episodes"]),
                 force=bool(spec["force"]),

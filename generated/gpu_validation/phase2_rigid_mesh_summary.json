@@ -1,0 +1,160 @@
+{
+  "date": "2026-08-11",
+  "result": "outcome_b",
+  "conclusion": "Native rigid mesh collision removes the dominant rigid-flex collision-path failure and passes the defined one-step tactile/task gate, but contact parity is not as tight as the native-block control and long-rollout equivalence is not established.",
+  "representative": {
+    "candidate_id": "n0500_a0p3_b0p6",
+    "object_id": "obj_size-large_ar-high_macro-high_rough-high",
+    "source_mesh": "study_objects/sphere_study_v1/obj_size-large_ar-high_macro-high_rough-high.msh"
+  },
+  "source_and_conversion": {
+    "format": "GMSH 2.2 little-endian binary",
+    "source_nodes": 2387,
+    "tetrahedra": 8552,
+    "source_surface_elements": 0,
+    "boundary_vertices": 1666,
+    "boundary_triangles": 3328,
+    "connected_components": 1,
+    "watertight": true,
+    "boundary_edges": 0,
+    "nonmanifold_edges": 0,
+    "winding_mismatch_edges": 0,
+    "raw_bbox_dimensions": [2.17316957999278, 1.9686451094815223, 3.8654560900000003],
+    "scaled_bbox_dimensions_m": [0.06791154937477438, 0.06152015967129757, 0.12079550281250001],
+    "bbox_max_abs_error": 0.0,
+    "volume_relative_error": 2.1588744109777074e-15,
+    "volume_centroid_l2_error": 3.5279345608447034e-16,
+    "study_family_sources_validated": 24,
+    "study_family_unique_hashes": 24
+  },
+  "three_way_cpu_warp_one_step": {
+    "native_block_control": {
+      "state": "settled contact",
+      "qpos_max_abs_error": 5.07e-8,
+      "qvel_max_abs_error": 3.12e-6,
+      "touch_max_abs_error": 1.48e-5
+    },
+    "old_rigid_flex": {
+      "state": "matched after 200 CPU settling steps",
+      "qpos_max_abs_error": 0.0016072189813642335,
+      "qvel_max_abs_error": 0.8036153128049772,
+      "touch_max_abs_error": 74.34978351092225,
+      "cpu_contacts": 89,
+      "warp_contacts_after_warp_collision": 2757,
+      "localization": "Warp generated 2674 flex-flex self contacts after its first collision pass, including in a CPU no-contact pose; contacts identify flex 0 on both sides with geom IDs -1/-1."
+    },
+    "new_rigid_mesh_geom": {
+      "state": "matched after 200 CPU settling steps",
+      "qpos_max_abs_error": 6.263384647320347e-7,
+      "qvel_max_abs_error": 0.0004446650358639892,
+      "touch_max_abs_error": 0.034697940837095764,
+      "touch_mean_abs_error": 6.939588167419152e-5,
+      "touch_median_abs_error": 0.0,
+      "touch_rmse": 0.0015517390878202416,
+      "touch_pearson": 0.9999999999999989,
+      "touch_active_cpu": 1,
+      "touch_active_warp": 1,
+      "touch_active_jaccard": 1.0,
+      "cpu_total_touch": 3.961634942997743,
+      "warp_total_touch": 3.996332883834839,
+      "total_touch_relative_error": 0.008758490203249283,
+      "cpu_contacts": 3,
+      "warp_contacts": 3,
+      "same_geom_pairs": 3,
+      "contact_position_max_abs_error_m": 0.00013251592542859458,
+      "contact_normal_max_abs_error": 0.002911992480274128,
+      "contact_distance_max_abs_error_m": 1.9491462138413455e-7,
+      "contact_force_max_abs_error": 0.05364656414433355,
+      "largest_touch_error_sensor": "robot0:TS_ffproximal_auto_006"
+    }
+  },
+  "new_mesh_acceptance_gate": {
+    "free_motion": {
+      "qpos_max_abs": 1e-6,
+      "qvel_max_abs": 0.0001,
+      "touch_max_abs": 1e-5
+    },
+    "settled_one_step": {
+      "qpos_max_abs": 1e-5,
+      "qvel_max_abs": 0.001,
+      "touch_max_abs": 0.05,
+      "touch_total_relative_error": 0.02,
+      "active_sensor_jaccard_min": 0.9,
+      "contact_count_and_geom_pairs": "exact"
+    },
+    "twenty_substep_policy_action": {
+      "qpos_max_abs": 0.0003,
+      "qvel_max_abs": 0.02,
+      "touch_max_abs": 0.2,
+      "reward_and_success": "exact"
+    },
+    "status": "passed",
+    "scope": "backend execution gate, not long-horizon learning equivalence"
+  },
+  "cpu_old_flex_vs_new_mesh": {
+    "mass_and_inertia_exact": true,
+    "independent_settled_old_contacts": 89,
+    "independent_settled_new_contacts": 3,
+    "independent_qpos_max_abs_difference": 0.88259,
+    "independent_qvel_max_abs_difference": 6.213,
+    "independent_old_total_touch": 501.648,
+    "independent_new_total_touch": 4.055,
+    "matched_old_settled_state_qvel_one_step_difference": 1.040407,
+    "matched_old_settled_state_old_total_touch": 435.194,
+    "matched_old_settled_state_new_total_touch": 0.0,
+    "scientific_consequence": "New rigid-mesh runs require distinct provenance and cannot be pooled with historical rigid-flex CPU results."
+  },
+  "n500_learning_smoke": {
+    "worlds": 64,
+    "requested_transitions": 12000,
+    "final_transitions": 12032,
+    "completed_episodes": 64,
+    "gradient_updates": 693,
+    "evaluations": 3,
+    "metrics_written": true,
+    "periodic_checkpoints": 2,
+    "final_checkpoint_written": true,
+    "success_curve": [0.0, 0.0, 0.0],
+    "elapsed_seconds": 37.479
+  },
+  "n500_complete_loop": {
+    "cpu_six_env_transitions_per_second": 75.236522938346,
+    "gpu_results": [
+      {"worlds": 32, "transitions_per_second": 181.21249665466294},
+      {"worlds": 64, "transitions_per_second": 180.57306258007404},
+      {"worlds": 128, "transitions_per_second": 195.20845888960375},
+      {"worlds": 256, "transitions_per_second": 192.11314137008767}
+    ],
+    "recommended_worlds": 128,
+    "recommended_updates_per_vector_step": 21,
+    "recommended_updates_per_second": 32.02638778657562,
+    "recommended_physics_world_steps_per_second": 3904.169177792075,
+    "recommended_seconds_per_100k_transitions": 512.2728828905565,
+    "cpu_matched_object_speedup": 2.594597029019683,
+    "mean_phase_milliseconds": {"simulation_task": 37.47005844116211, "her": 48.66836293538412, "tqc": 565.1563301086426},
+    "peak_allocated_bytes": 360539136,
+    "batch_global_active_contacts_high_water": 513,
+    "max_constraints_per_world": 75,
+    "overflow_flags": 0
+  },
+  "n1000_validation": {
+    "touch_channels": 1000,
+    "raw_observation_width": 1062,
+    "policy_input_width": 1076,
+    "replay_effective_capacity": 19968,
+    "replay_storage_bytes": 173923104,
+    "final_transitions": 12032,
+    "completed_episodes": 64,
+    "gradient_updates": 693,
+    "evaluations": 2,
+    "metrics_and_checkpoints_written": true,
+    "worlds_benchmarked": 128,
+    "transitions_per_second": 160.23657692753784,
+    "updates_per_second": 26.288813402174174,
+    "physics_world_steps_per_second": 3204.7315385507563,
+    "seconds_per_100k_transitions": 624.0772357813285,
+    "batch_global_active_contacts_high_water": 518,
+    "max_constraints_per_world": 75,
+    "overflow_flags": 0
+  }
+}

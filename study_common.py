@@ -22,6 +22,7 @@ ALLOWED_RATIO_VALUES = tuple(round(x / 10.0, 1) for x in range(1, 10))
 PHYSICS_MODES = ("deformable", "rigid")
 ASPECT_RATIO_VALUES = ("low", "high")
 SIZE_VALUES = ("small", "medium", "large")
+NATIVE_RIGID_TASKS = ("block", "egg", "pen")
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class StudyObject:
     aspect_ratio: str
     size: str
     abs_msh_path: str
+    native_task: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -247,10 +249,13 @@ def load_study_manifest(objects_root: str, expected_base_objects: Optional[int] 
     combos_by_base: Dict[str, set[Tuple[str, str]]] = {}
     with manifest_path.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
-        required = {"object_id", "msh_file", "base_object", "aspect_ratio", "size"}
+        fieldnames = set(reader.fieldnames or [])
+        required = {"object_id", "base_object", "aspect_ratio", "size"}
         missing = required.difference(reader.fieldnames or [])
         if missing:
             raise ValueError(f"manifest.csv missing required columns: {sorted(missing)}")
+        if "msh_file" not in fieldnames and "native_task" not in fieldnames:
+            raise ValueError("manifest.csv must include 'msh_file' and/or 'native_task'.")
 
         for idx, row in enumerate(reader, start=2):
             object_id = sanitize_identifier(row["object_id"])
@@ -261,12 +266,27 @@ def load_study_manifest(objects_root: str, expected_base_objects: Optional[int] 
             base_object = sanitize_identifier(row["base_object"])
             aspect_ratio = _validate_choice(row["aspect_ratio"], ASPECT_RATIO_VALUES, "aspect_ratio", idx)
             size = _validate_choice(row["size"], SIZE_VALUES, "size", idx)
-            msh_file = row["msh_file"].strip()
-            abs_msh_path = (root / msh_file).resolve()
-            if not abs_msh_path.is_file():
-                raise FileNotFoundError(f"Row {idx}: mesh file not found: {abs_msh_path}")
+            msh_file = (row.get("msh_file") or "").strip()
+            native_task_raw = (row.get("native_task") or "").strip()
+            native_task = sanitize_identifier(native_task_raw) if native_task_raw else None
+            if bool(msh_file) == bool(native_task):
+                raise ValueError(
+                    f"Row {idx}: provide exactly one of msh_file or native_task."
+                )
+            if native_task is not None:
+                if native_task not in NATIVE_RIGID_TASKS:
+                    raise ValueError(
+                        f"Row {idx}: invalid native_task={native_task!r}; "
+                        f"expected one of {NATIVE_RIGID_TASKS}."
+                    )
+                abs_msh_path = None
+            else:
+                abs_msh_path = (root / msh_file).resolve()
+                if not abs_msh_path.is_file():
+                    raise FileNotFoundError(f"Row {idx}: mesh file not found: {abs_msh_path}")
 
-            combos_by_base.setdefault(base_object, set()).add((aspect_ratio, size))
+            if native_task is None:
+                combos_by_base.setdefault(base_object, set()).add((aspect_ratio, size))
             rows.append(
                 StudyObject(
                     object_id=object_id,
@@ -274,19 +294,21 @@ def load_study_manifest(objects_root: str, expected_base_objects: Optional[int] 
                     base_object=base_object,
                     aspect_ratio=aspect_ratio,
                     size=size,
-                    abs_msh_path=str(abs_msh_path),
+                    abs_msh_path=str(abs_msh_path) if abs_msh_path is not None else "",
+                    native_task=native_task,
                 )
             )
 
     if not rows:
         raise ValueError(f"No rows found in {manifest_path}")
 
-    if expected_base_objects is not None and len(combos_by_base) != expected_base_objects:
+    base_objects = {row.base_object for row in rows}
+    if expected_base_objects is not None and len(base_objects) != expected_base_objects:
         raise ValueError(
-            f"Expected {expected_base_objects} base objects, found {len(combos_by_base)} in {manifest_path}"
+            f"Expected {expected_base_objects} base objects, found {len(base_objects)} in {manifest_path}"
         )
 
-    sizes_present = {row.size for row in rows}
+    sizes_present = {row.size for row in rows if row.native_task is None}
     expected_sizes = tuple(size for size in SIZE_VALUES if size in sizes_present)
     expected_combos = {(aspect_ratio, size) for aspect_ratio in ASPECT_RATIO_VALUES for size in expected_sizes}
     for base_object, combos in combos_by_base.items():
@@ -310,6 +332,7 @@ def expand_jobs_for_candidate(
                 {
                     "object_id": obj.object_id,
                     "msh_file": obj.msh_file,
+                    "native_task": obj.native_task,
                     "base_object": obj.base_object,
                     "aspect_ratio": obj.aspect_ratio,
                     "size": obj.size,
@@ -379,7 +402,10 @@ def compute_scalar_from_metrics(
             curve = [float(value) for value in metrics["success"][task]]
             x_axis = [float(value) for value in checkpoints]
             if len(curve) >= 2 and x_axis[-1] > x_axis[0]:
-                aulc = float(np.trapz(curve, x=x_axis) / (x_axis[-1] - x_axis[0]))
+                trapezoid = getattr(np, "trapezoid", None)
+                if trapezoid is None:  # NumPy < 2.0
+                    trapezoid = np.trapz
+                aulc = float(trapezoid(curve, x=x_axis) / (x_axis[-1] - x_axis[0]))
             else:
                 aulc = float(np.mean(curve)) if curve else final_success
             try:

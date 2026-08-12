@@ -47,6 +47,59 @@ def has_opt(opt: str, argv: Sequence[str]) -> bool:
     return any(str(arg).startswith(opt + "=") for arg in argv)
 
 
+def _expand_trainer_args(
+    trainer_args: Sequence[object],
+    *,
+    job: Dict[str, object],
+    artifact_abs: Path,
+) -> List[str]:
+    replacements = {
+        "{artifact_root}": str(artifact_abs),
+        "{candidate_id}": str(job["candidate_id"]),
+        "{object_id}": str(job["object_id"]),
+        "{physics_mode}": str(job["physics_mode"]),
+    }
+    expanded: List[str] = []
+    for argument in trainer_args:
+        value = str(argument)
+        for placeholder, replacement in replacements.items():
+            value = value.replace(placeholder, replacement)
+        expanded.append(value)
+    return expanded
+
+
+def validate_job_trainer(job: Dict[str, object], trainer_args: Sequence[str]) -> str:
+    trainer = str(job.get("trainer", "cpu"))
+    if has_opt("--trainer", trainer_args):
+        raise ValueError(
+            "Queued trainer_args cannot override the job's validated trainer field."
+        )
+    if trainer not in {"cpu", "gpu"}:
+        raise ValueError(f"Unknown trainer {trainer!r} in queued job.")
+    if trainer == "cpu":
+        return trainer
+    if str(job["physics_mode"]) != "rigid":
+        raise ValueError("GPU queued jobs must use rigid physics mode.")
+    if str(job.get("task_kind", "mesh")) not in {"native", "mesh"}:
+        raise ValueError("GPU queued jobs require a native task or convertible custom mesh.")
+    if has_opt("--auto-num-envs", trainer_args):
+        if not has_opt("--auto-num-envs-report", trainer_args):
+            raise ValueError("GPU --auto-num-envs requires --auto-num-envs-report.")
+    elif not all(
+        has_opt(option, trainer_args)
+        for option in ("--num-envs", "--contacts-per-world", "--constraints-per-world")
+    ):
+        raise ValueError(
+            "GPU queued jobs need a complete explicit allocation or --auto-num-envs."
+        )
+    if not (
+        has_opt("--auto-replay-capacity", trainer_args)
+        or has_opt("--buffer-size", trainer_args)
+    ):
+        raise ValueError("GPU queued jobs need an explicit replay-memory policy.")
+    return trainer
+
+
 def parse_gpu_query_output(raw_output: str) -> List[Dict[str, int | str]]:
     rows = []
     for line in raw_output.strip().splitlines():
@@ -286,8 +339,21 @@ def sync_artifacts_to_coordinator(job: Dict[str, object], artifact_abs: Path, co
 
 def build_job_command(job: Dict[str, object], repo_root: Path, host_cfg: HostConfig) -> List[str]:
     artifact_abs = repo_root / str(job["artifact_relpath"])
-    object_msh_abs = repo_root / str(job["object_msh_relpath"])
+    task_kind = str(job.get("task_kind", "mesh"))
+    if task_kind == "native":
+        task_arg = str(job["task_arg"])
+    else:
+        task_relpath = str(job.get("task_arg", job.get("object_msh_relpath", "")))
+        if not task_relpath:
+            raise ValueError("Queued mesh job is missing task_arg/object_msh_relpath.")
+        task_arg = str(repo_root / task_relpath)
     base_xml_abs = repo_root / str(job["base_xml_relpath"])
+    trainer_args = _expand_trainer_args(
+        job.get("trainer_args", []),
+        job=job,
+        artifact_abs=artifact_abs,
+    )
+    trainer = validate_job_trainer(job, trainer_args)
     run_label = build_run_label(str(job["candidate_id"]), str(job["object_id"]), str(job["physics_mode"]))
     cmd = [
         sys.executable,
@@ -295,7 +361,9 @@ def build_job_command(job: Dict[str, object], repo_root: Path, host_cfg: HostCon
         "--base",
         str(base_xml_abs),
         "--task",
-        str(object_msh_abs),
+        task_arg,
+        "--trainer",
+        trainer,
         "--Ntotal",
         str(job["Ntotal"]),
         "--Rppx",
@@ -341,15 +409,19 @@ def build_job_command(job: Dict[str, object], repo_root: Path, host_cfg: HostCon
             str(job["physics_mode"]),
         ]
     )
-    trainer_args = [str(arg) for arg in job.get("trainer_args", [])]
     resolved_num_envs = host_cfg.resolved_num_envs_per_job()
-    if resolved_num_envs is not None and not has_opt("--num-envs", trainer_args):
+    if (
+        trainer == "cpu"
+        and resolved_num_envs is not None
+        and not has_opt("--num-envs", trainer_args)
+    ):
         trainer_args.extend(["--num-envs", str(resolved_num_envs)])
     cmd.extend(trainer_args)
     return cmd
 
 
 def launch_job(job: Dict[str, object], gpu_id: int, repo_root: Path, host_cfg: HostConfig) -> RunningJob:
+    command = build_job_command(job, repo_root, host_cfg)
     artifact_abs = repo_root / str(job["artifact_relpath"])
     artifact_abs.mkdir(parents=True, exist_ok=True)
     stdout_abs = repo_root / str(job["stdout_relpath"])
@@ -373,14 +445,15 @@ def launch_job(job: Dict[str, object], gpu_id: int, repo_root: Path, host_cfg: H
     resolved_cpu_threads = host_cfg.resolved_cpu_threads_per_job()
     print(
         f"[worker] launching job_id={job['job_id']} host={host_cfg.host} gpu={gpu_id} "
-        f"num_envs={resolved_num_envs if resolved_num_envs is not None else 'user-specified'} "
+        f"trainer={job.get('trainer', 'cpu')} "
+        f"cpu_num_envs_hint={resolved_num_envs if resolved_num_envs is not None else 'unset'} "
         f"cpu_threads_per_job={resolved_cpu_threads if resolved_cpu_threads is not None else 'unknown'}"
     )
 
     stdout_handle = open(stdout_abs, "w", encoding="utf-8")
     stderr_handle = open(stderr_abs, "w", encoding="utf-8")
     process = subprocess.Popen(
-        build_job_command(job, repo_root, host_cfg),
+        command,
         cwd=str(repo_root),
         env=env,
         stdout=stdout_handle,

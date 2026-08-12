@@ -6,6 +6,9 @@ from typing import Dict, List, Tuple
 import os, sys, math, argparse, re, shutil, json, struct
 import xml.etree.ElementTree as ET
 from collections import defaultdict, namedtuple
+from pathlib import Path
+
+from object_conversion import convert_gmsh_to_rigid_surface, scaled_geometry_metrics
 
 # =========================
 # util: formatting + paths
@@ -73,6 +76,19 @@ SIZE_SPAWN_HEIGHTS = {
         "medium": 0.17,
         "large": 0.20,
     },
+}
+
+RIGID_MESH_ASSET_NAME = "custom_object_mesh"
+RIGID_GEOM_CONTACT_ATTRIBUTES = {
+    "friction": "1 0.005 0.0001",
+    "condim": "3",
+    "solref": "0.02 1",
+    "solimp": "0.9 0.95 0.001 0.5 2",
+    "margin": "0",
+    "gap": "0",
+    "contype": "1",
+    "conaffinity": "1",
+    "priority": "0",
 }
 
 
@@ -401,7 +417,7 @@ def save_text_with_header(path: str, xml: str):
 
 def analyze_gmsh_msh(msh_path: str) -> Dict[str, object]:
     """Best-effort Gmsh v2 diagnostics for scale and element sanity."""
-    raw = open(msh_path, "rb").read()
+    raw = Path(msh_path).read_bytes()
     out: Dict[str, object] = {
         "path": os.path.abspath(msh_path),
         "format": "unknown",
@@ -1101,6 +1117,7 @@ def patch_env_object_to_custom_msh(
     msh_file_for_xml: str,
     *,
     deformable: bool = False,
+    rigid_surface_file_for_xml: str | None = None,
     object_mass: float = 0.07,
     object_inertia: str = "1e-3 1e-3 1e-3",
     object_pos: str = "1 0.87 0.4",
@@ -1110,8 +1127,12 @@ def patch_env_object_to_custom_msh(
     deformable_option_overrides: Dict[str, str] | None = None,
 ):
     """
-    Replace the default block geoms in <body name='object'> with a custom .msh flexcomp.
-    Keeps the free joint and object:center site names used by the task code.
+    Replace the default object with a custom deformable flex or native rigid mesh.
+
+    The deformable branch continues to consume the volume ``.msh`` through
+    ``flexcomp``.  The rigid branch requires a previously validated exterior surface
+    and emits a conventional mesh geom.  Both retain the task's free-joint and
+    object:center names.
     """
     tree = ET.parse(env_xml)
     root = tree.getroot()
@@ -1152,7 +1173,25 @@ def patch_env_object_to_custom_msh(
     if object_body is None:
         raise SystemExit(f"ERROR: no <body name='object'> found in {env_xml}")
 
-    # Preserve ordering expected by other tooling: joint + inertial + flexcomp + site.
+    if not deformable:
+        if not rigid_surface_file_for_xml:
+            raise ValueError("rigid custom objects require an exterior surface mesh")
+        asset = root.find("asset")
+        if asset is None:
+            asset = ET.SubElement(root, "asset")
+        for old_mesh in list(asset.findall(f"./mesh[@name='{RIGID_MESH_ASSET_NAME}']")):
+            asset.remove(old_mesh)
+        ET.SubElement(
+            asset,
+            "mesh",
+            {
+                "name": RIGID_MESH_ASSET_NAME,
+                "file": rigid_surface_file_for_xml,
+                "scale": flex_scale,
+            },
+        )
+
+    # Preserve ordering expected by other tooling: joint + inertial + collision + site.
     object_body.set("pos", object_pos)
     for ch in list(object_body):
         object_body.remove(ch)
@@ -1270,22 +1309,16 @@ def patch_env_object_to_custom_msh(
             "inertial",
             {"pos": "0 0 0", "mass": str(object_mass), "diaginertia": object_inertia},
         )
-        flex = ET.SubElement(
+        ET.SubElement(
             object_body,
-            "flexcomp",
+            "geom",
             {
-                "name": "soft",
-                "type": "gmsh",
-                "file": msh_file_for_xml,
-                "dim": "3",
-                "dof": "trilinear",
-                "pos": "0 0 0",
-                "scale": flex_scale,
-                "radius": flex_radius,
-                "rigid": "true",
+                "name": "object",
+                "type": "mesh",
+                "mesh": RIGID_MESH_ASSET_NAME,
+                **RIGID_GEOM_CONTACT_ATTRIBUTES,
             },
         )
-        ET.SubElement(flex, "contact", {"selfcollide": "none", "internal": "false"})
         ET.SubElement(
             object_body,
             "site",
@@ -1306,6 +1339,89 @@ def patch_shared_for_deformable(shared_xml: str, deformable_preset: str = DEFAUL
     size.set("nconmax", str(int(preset.get("nconmax", 10000))))
     size.set("nstack", str(int(preset.get("nstack", 8000000))))
     tree.write(shared_xml, encoding="utf-8", xml_declaration=True)
+
+
+def _parse_scale_triplet(scale: str) -> tuple[float, float, float]:
+    values = tuple(float(value) for value in scale.split())
+    if len(values) != 3 or any(value <= 0.0 for value in values):
+        raise ValueError(f"mesh scale must contain three positive values, found {scale!r}")
+    return values  # type: ignore[return-value]
+
+
+def _rigid_env_matches_surface(env_xml: str, surface_basename: str) -> bool:
+    if not os.path.isfile(env_xml):
+        return False
+    try:
+        root = ET.parse(env_xml).getroot()
+    except ET.ParseError:
+        return False
+    object_body = root.find("./worldbody/body[@name='object']")
+    if object_body is None or object_body.find("flexcomp") is not None:
+        return False
+    geom = object_body.find("./geom[@name='object']")
+    mesh = root.find(f"./asset/mesh[@name='{RIGID_MESH_ASSET_NAME}']")
+    return bool(
+        geom is not None
+        and geom.get("type") == "mesh"
+        and geom.get("mesh") == RIGID_MESH_ASSET_NAME
+        and mesh is not None
+        and mesh.get("file") == surface_basename
+    )
+
+
+def write_rigid_representation_manifest(
+    path: str,
+    *,
+    conversion_result,
+    generated_surface_path: str,
+    mesh_scale: str,
+    object_mass: float,
+    object_inertia: str,
+    object_pos: str,
+) -> None:
+    scale = _parse_scale_triplet(mesh_scale)
+    geometry = conversion_result.manifest["geometry"]
+    payload = {
+        "representation": "rigid_mesh_geom",
+        "source_mesh": str(conversion_result.source_path),
+        "source_hash": conversion_result.source_hash,
+        "converted_mesh": os.path.abspath(generated_surface_path),
+        "converted_hash": conversion_result.manifest["converted_hash"],
+        "conversion_manifest": str(conversion_result.conversion_manifest_path),
+        "converter_version": conversion_result.manifest["converter_version"],
+        "conversion_parameters": conversion_result.manifest["conversion_parameters"],
+        "cache_key": conversion_result.cache_key,
+        "cache_reused": bool(conversion_result.cache_reused),
+        "source_format": conversion_result.manifest["source_format"],
+        "source_bbox": {
+            "min": geometry["source_bbox_min"],
+            "max": geometry["source_bbox_max"],
+            "dimensions": geometry["source_bbox_dimensions"],
+        },
+        "converted_bbox": {
+            "min": geometry["bbox_min"],
+            "max": geometry["bbox_max"],
+            "dimensions": geometry["bbox_dimensions"],
+        },
+        "scaled_geometry": scaled_geometry_metrics(geometry, scale),
+        "mass": float(object_mass),
+        "inertial_position": [0.0, 0.0, 0.0],
+        "diaginertia": [float(value) for value in object_inertia.split()],
+        "body_position": [float(value) for value in object_pos.split()],
+        "free_joint": "object:joint",
+        "mesh_asset": RIGID_MESH_ASSET_NAME,
+        "geom_name": "object",
+        "contact_parameters": dict(RIGID_GEOM_CONTACT_ATTRIBUTES),
+        "unmapped_rigid_flex_parameters": {
+            "radius": "no exact native mesh-geom equivalent",
+            "selfcollide": "not applicable to a single rigid geom",
+            "internal": "internal tetrahedral faces were removed during conversion",
+        },
+    }
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
 
 # =======================
 # 4) HIGH-LEVEL MODES
@@ -1352,6 +1468,7 @@ def build_candidate_standalone(
     object_mass: str | float = "0.07",
     object_inertia: str = "1e-3 1e-3 1e-3",
     deformable_preset: str = DEFAULT_DEFORMABLE_PRESET,
+    rigid_mesh_cache_dir: str | None = None,
 ) -> Dict[str, str]:
     """
     No side effects. Returns dict with paths:
@@ -1372,10 +1489,47 @@ def build_candidate_standalone(
         custom_msh_name = "egg_deformable.msh"
         deformable_option_overrides = EGG_DEFORMABLE_FAST_OPTION_OVERRIDES
 
+    rigid_conversion = None
+    rigid_surface_dst: str | None = None
+    msh_dst: str | None = None
+    msh_basename: str | None = None
+    if custom_msh:
+        # Preserve the source volume mesh beside other compiler assets for audit and
+        # for the unchanged deformable branch.
+        custom_mesh_dst_dir = os.path.join(out_root, "stls", "hand")
+        os.makedirs(custom_mesh_dst_dir, exist_ok=True)
+        msh_basename = custom_msh_name or os.path.basename(custom_msh)
+        msh_dst = os.path.join(custom_mesh_dst_dir, msh_basename)
+        if force or (not os.path.exists(msh_dst)):
+            shutil.copy2(custom_msh, msh_dst)
+            print(f"[OK] Copied custom .msh: {msh_dst}")
+        diag_path = os.path.join(paths["dir"], f"{os.path.splitext(msh_basename)[0]}_msh_diagnostics.json")
+        if force or (not os.path.exists(diag_path)):
+            write_msh_diagnostics(msh_dst, diag_path)
+
+        if not deformable_object:
+            cache_dir = rigid_mesh_cache_dir or os.path.join(out_root, "rigid_mesh_cache")
+            rigid_conversion = convert_gmsh_to_rigid_surface(custom_msh, cache_dir)
+            rigid_surface_dst = os.path.join(custom_mesh_dst_dir, rigid_conversion.mesh_path.name)
+            if force or not os.path.exists(rigid_surface_dst):
+                if rigid_conversion.mesh_path.resolve() != Path(rigid_surface_dst).resolve():
+                    shutil.copy2(rigid_conversion.mesh_path, rigid_surface_dst)
+                print(f"[OK] Installed cached rigid surface: {rigid_surface_dst}")
+            else:
+                print(f"[SKIP] Using cached rigid surface: {rigid_surface_dst}")
+            paths["rigid_surface"] = rigid_surface_dst
+            paths["rigid_conversion_manifest"] = str(rigid_conversion.conversion_manifest_path)
+            paths["rigid_cache_key"] = rigid_conversion.cache_key
+
     # 1) shared + robot
     build_shared_and_robot(Ap, Apx, At, Ntotal, Rppx, Rpt, Ap1, Ap2, base_xml, paths["shared"], paths["robot"], force=force)
     # 2) standalone env that includes the basenames
-    if force or (not os.path.exists(paths["env"])):
+    needs_env = force or (not os.path.exists(paths["env"]))
+    if rigid_surface_dst is not None and not _rigid_env_matches_surface(
+        paths["env"], os.path.basename(rigid_surface_dst)
+    ):
+        needs_env = True
+    if needs_env:
         write_standalone_env(
             template_xml=template_xml,
             out_env=paths["env"],
@@ -1383,21 +1537,14 @@ def build_candidate_standalone(
             robot_basename=os.path.basename(paths["robot"]),
         )
         if custom_msh:
-            # The task XML compiler uses meshdir="../stls/hand", so place the custom .msh there.
-            custom_mesh_dst_dir = os.path.join(out_root, "stls", "hand")
-            os.makedirs(custom_mesh_dst_dir, exist_ok=True)
-            msh_basename = custom_msh_name or os.path.basename(custom_msh)
-            msh_dst = os.path.join(custom_mesh_dst_dir, msh_basename)
-            if force or (not os.path.exists(msh_dst)):
-                shutil.copy2(custom_msh, msh_dst)
-                print(f"[OK] Copied custom .msh: {msh_dst}")
-            diag_path = os.path.join(paths["dir"], f"{os.path.splitext(msh_basename)[0]}_msh_diagnostics.json")
-            if force or (not os.path.exists(diag_path)):
-                write_msh_diagnostics(msh_dst, diag_path)
+            assert msh_dst is not None
             patch_env_object_to_custom_msh(
                 paths["env"],
                 os.path.basename(msh_dst),
                 deformable=deformable_object,
+                rigid_surface_file_for_xml=(
+                    os.path.basename(rigid_surface_dst) if rigid_surface_dst else None
+                ),
                 object_mass=float(object_mass),
                 object_inertia=object_inertia,
                 object_pos=object_pos,
@@ -1409,17 +1556,20 @@ def build_candidate_standalone(
         print(f"[OK] Wrote standalone env: {paths['env']}")
     else:
         print(f"[SKIP] Using cached env: {paths['env']}")
-        if custom_msh:
-            custom_mesh_dst_dir = os.path.join(out_root, "stls", "hand")
-            os.makedirs(custom_mesh_dst_dir, exist_ok=True)
-            msh_basename = custom_msh_name or os.path.basename(custom_msh)
-            msh_dst = os.path.join(custom_mesh_dst_dir, msh_basename)
-            if force or (not os.path.exists(msh_dst)):
-                shutil.copy2(custom_msh, msh_dst)
-                print(f"[OK] Copied custom .msh: {msh_dst}")
-            diag_path = os.path.join(paths["dir"], f"{os.path.splitext(msh_basename)[0]}_msh_diagnostics.json")
-            if force or (not os.path.exists(diag_path)):
-                write_msh_diagnostics(msh_dst, diag_path)
+
+    if rigid_conversion is not None and rigid_surface_dst is not None:
+        representation_manifest = os.path.join(paths["dir"], "rigid_object_representation.json")
+        write_rigid_representation_manifest(
+            representation_manifest,
+            conversion_result=rigid_conversion,
+            generated_surface_path=rigid_surface_dst,
+            mesh_scale=flex_scale,
+            object_mass=float(object_mass),
+            object_inertia=object_inertia,
+            object_pos=object_pos,
+        )
+        paths["rigid_representation_manifest"] = representation_manifest
+        print(f"[OK] Wrote rigid representation manifest: {representation_manifest}")
     
     # Copy shared assets needed by the standalone environment
     assets_dir = os.path.dirname(base_xml)
@@ -1512,6 +1662,8 @@ def main():
     p.add_argument("--standalone", action="store_true", help="Generate a per-candidate folder with shared, robot, and a standalone env (no side effects).")
     p.add_argument("--template", help="Template task XML used to create the standalone env. If omitted, a default matching --task is used, or --main if provided.")
     p.add_argument("--out-root", default="generated", help="Root folder for standalone candidates (each under <N>_<r1>_<r2>/).")
+    p.add_argument("--rigid-mesh-cache", default=None,
+                   help="Shared source-hash cache for converted rigid OBJ surfaces.")
     p.add_argument("--force", action="store_true", help="Overwrite/cached outputs for this candidate.")
 
     # Allocation / areas / ratios
@@ -1570,6 +1722,7 @@ def main():
             object_mass=object_mass,
             object_inertia=object_inertia,
             deformable_preset=args.deformable_preset,
+            rigid_mesh_cache_dir=args.rigid_mesh_cache,
         )
         # Emit a small machine-friendly summary for BO loops
         print(json.dumps(paths, indent=2))

@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from optimize_dataset_gpbo import choose_next_candidate
-from study_common import Candidate
+from optimize_dataset_gpbo import choose_next_candidate, validate_study_trainer
+from study_common import Candidate, StudyObject
 from study_queue import StudyQueue
 
 
@@ -96,6 +96,55 @@ class OptimizeDatasetGPBOTests(unittest.TestCase):
         self.assertIsNotNone(candidate)
         self.assertEqual(candidate.candidate_id, self.available_candidate.candidate_id)
         self.assertEqual(source, "bo")
+
+    def test_gpu_study_accepts_rigid_geoms_and_requires_explicit_memory_policy(self):
+        native = StudyObject(
+            object_id="builtin_block",
+            msh_file="",
+            base_object="block",
+            aspect_ratio="high",
+            size="medium",
+            abs_msh_path="",
+            native_task="block",
+        )
+        args = [
+            "--num-envs", "64",
+            "--contacts-per-world", "128",
+            "--constraints-per-world", "256",
+            "--auto-replay-capacity",
+        ]
+        validate_study_trainer(
+            "gpu",
+            study_objects=[native],
+            sobol_physics_modes=["rigid"],
+            bo_physics_modes=["rigid"],
+            trainer_args=args,
+        )
+
+        mesh = StudyObject(
+            object_id="mesh_object",
+            msh_file="object.msh",
+            base_object="object",
+            aspect_ratio="high",
+            size="medium",
+            abs_msh_path="/tmp/object.msh",
+        )
+        validate_study_trainer(
+            "gpu",
+            study_objects=[mesh],
+            sobol_physics_modes=["rigid"],
+            bo_physics_modes=["rigid"],
+            trainer_args=args,
+        )
+
+        with self.assertRaisesRegex(ValueError, "top-level --trainer"):
+            validate_study_trainer(
+                "cpu",
+                study_objects=[native],
+                sobol_physics_modes=["rigid"],
+                bo_physics_modes=["rigid"],
+                trainer_args=["--trainer", "gpu"],
+            )
 
 
 if __name__ == "__main__":

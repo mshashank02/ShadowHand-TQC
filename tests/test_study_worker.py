@@ -8,6 +8,7 @@ from study_worker import (
     free_gpu_ids,
     parse_compute_query_output,
     parse_gpu_query_output,
+    validate_job_trainer,
 )
 
 
@@ -95,6 +96,59 @@ class StudyWorkerTests(unittest.TestCase):
         cmd = build_job_command(job, Path("/tmp/repo"), self._host_cfg())
         num_envs_idx = cmd.index("--num-envs")
         self.assertEqual(cmd[num_envs_idx + 1], "3")
+
+    def test_gpu_native_job_forwards_trainer_and_does_not_use_cpu_host_world_hint(self):
+        job = {
+            "artifact_relpath": "generated/run",
+            "task_arg": "block",
+            "task_kind": "native",
+            "base_xml_relpath": "assets/hand_base.xml",
+            "candidate_id": "n0500_a0p3_b0p6",
+            "object_id": "builtin_block",
+            "size": "medium",
+            "physics_mode": "rigid",
+            "trainer": "gpu",
+            "Ntotal": 500,
+            "Rppx": 1.0,
+            "Rpt": 1.0,
+            "seed": 0,
+            "eval_episodes": 2,
+            "trainer_args": [
+                "--num-envs", "64",
+                "--contacts-per-world", "128",
+                "--constraints-per-world", "256",
+                "--auto-replay-capacity",
+            ],
+        }
+
+        cmd = build_job_command(job, Path("/tmp/repo"), self._host_cfg())
+        trainer_idx = cmd.index("--trainer")
+        self.assertEqual(cmd[trainer_idx + 1], "gpu")
+        task_idx = cmd.index("--task")
+        self.assertEqual(cmd[task_idx + 1], "block")
+        num_envs_idx = cmd.index("--num-envs")
+        self.assertEqual(cmd[num_envs_idx + 1], "64")
+
+    def test_gpu_job_accepts_rigid_custom_mesh_with_explicit_capacity(self):
+        job = {
+            "trainer": "gpu",
+            "task_kind": "mesh",
+            "physics_mode": "rigid",
+        }
+        args = [
+            "--num-envs", "64",
+            "--contacts-per-world", "128",
+            "--constraints-per-world", "256",
+            "--auto-replay-capacity",
+        ]
+        self.assertEqual(validate_job_trainer(job, args), "gpu")
+
+    def test_queued_args_cannot_bypass_validated_trainer(self):
+        with self.assertRaisesRegex(ValueError, "cannot override"):
+            validate_job_trainer(
+                {"trainer": "cpu"},
+                ["--trainer=gpu"],
+            )
 
 
 if __name__ == "__main__":

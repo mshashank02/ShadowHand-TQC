@@ -1,9 +1,11 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from study_common import (
     build_candidate_grid,
+    load_score_from_artifacts,
     load_cluster_config,
     load_study_manifest,
     sobol_initial_candidates,
@@ -80,6 +82,51 @@ class StudyCommonTests(unittest.TestCase):
             objects = load_study_manifest(str(root), expected_base_objects=2)
             self.assertEqual(len(objects), 12)
             self.assertEqual({obj.size for obj in objects}, {"small", "medium", "large"})
+
+    def test_load_study_manifest_accepts_explicit_native_rigid_task(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "manifest.csv").write_text(
+                "object_id,native_task,base_object,aspect_ratio,size\n"
+                "builtin_block,block,block,high,medium\n",
+                encoding="utf-8",
+            )
+
+            objects = load_study_manifest(str(root), expected_base_objects=1)
+            self.assertEqual(len(objects), 1)
+            self.assertEqual(objects[0].native_task, "block")
+            self.assertEqual(objects[0].msh_file, "")
+            self.assertEqual(objects[0].abs_msh_path, "")
+
+    def test_manifest_row_cannot_mix_mesh_and_native_task(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "manifest.csv").write_text(
+                "object_id,msh_file,native_task,base_object,aspect_ratio,size\n"
+                "ambiguous,obj.msh,block,obj,high,medium\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "exactly one"):
+                load_study_manifest(str(root), expected_base_objects=1)
+
+    def test_gpu_metrics_schema_is_consumed_without_backend_specific_logic(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            metrics_path = Path(tmpdir) / "metrics.json"
+            metrics_path.write_text(
+                json.dumps(
+                    {
+                        "backend": "mujoco_warp",
+                        "tasks": ["builtin_block"],
+                        "checkpoints": [0.5, 1.0],
+                        "success": {"builtin_block": [0.25, 0.75]},
+                        "final_success": {"builtin_block": 0.75},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            score = load_score_from_artifacts(str(metrics_path))
+            self.assertIsNotNone(score)
+            self.assertGreater(score, 0.0)
 
     def test_load_cluster_config_computes_repo_path_and_python_bin(self):
         with tempfile.TemporaryDirectory() as tmpdir:
