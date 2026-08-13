@@ -4,10 +4,14 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 
+import numpy as np
+
 from object_conversion import convert_gmsh_to_rigid_surface
 from pipeline_generate import (
+    RIGID_DECOMPOSITION_ASSET_PREFIX,
     RIGID_GEOM_CONTACT_ATTRIBUTES,
     RIGID_MESH_ASSET_NAME,
+    RIGID_VISUAL_MESH_ASSET_NAME,
     build_candidate_standalone,
     patch_env_object_to_custom_msh,
     write_rigid_representation_manifest,
@@ -51,7 +55,85 @@ def write_template(path: Path) -> None:
     )
 
 
+def write_tetra_obj(path: Path, offset: float = 0.0) -> None:
+    path.write_text(
+        f"""v {offset} 0 0
+v {offset + 0.01} 0 0
+v {offset} 0.01 0
+v {offset} 0 0.01
+f 1 3 2
+f 1 2 4
+f 2 3 4
+f 3 1 4
+""",
+        encoding="utf-8",
+    )
+
+
 class RigidMeshGenerationTests(unittest.TestCase):
+    def test_decomposition_pieces_share_one_body_and_preserve_inertial_and_contacts(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root_dir = Path(tmpdir)
+            path = root_dir / "model.xml"
+            write_template(path)
+            write_tetra_obj(root_dir / "visual.obj")
+            write_tetra_obj(root_dir / "piece_000.obj")
+            write_tetra_obj(root_dir / "piece_001.obj", offset=0.008)
+            patch_env_object_to_custom_msh(
+                str(path),
+                "source.msh",
+                rigid_surface_file_for_xml="visual.obj",
+                rigid_collision_representation="convex_decomposition",
+                rigid_decomposition_files_for_xml=("piece_000.obj", "piece_001.obj"),
+                object_mass=0.75,
+                object_inertia="0.1 0.2 0.3",
+                object_pos="1 2 3",
+                flex_scale="1 1 1",
+            )
+            root = ET.parse(path).getroot()
+            bodies = root.findall(".//body")
+            self.assertEqual(len(bodies), 1)
+            body = bodies[0]
+            self.assertEqual(body.attrib["name"], "object")
+            self.assertEqual(len(body.findall("joint[@type='free']")), 1)
+            self.assertEqual(body.find("joint").attrib["name"], "object:joint")
+            inertial = body.find("inertial")
+            self.assertEqual(inertial.attrib["mass"], "0.75")
+            self.assertEqual(inertial.attrib["diaginertia"], "0.1 0.2 0.3")
+            visual = body.find("geom[@name='object_visual']")
+            self.assertEqual(visual.attrib["mesh"], RIGID_VISUAL_MESH_ASSET_NAME)
+            self.assertEqual(visual.attrib["contype"], "0")
+            self.assertEqual(visual.attrib["conaffinity"], "0")
+            collisions = [
+                geom for geom in body.findall("geom")
+                if geom.attrib.get("name", "").startswith("object_collision_")
+            ]
+            self.assertEqual(len(collisions), 2)
+            for index, geom in enumerate(collisions):
+                self.assertEqual(
+                    geom.attrib["mesh"], f"{RIGID_DECOMPOSITION_ASSET_PREFIX}_{index:03d}"
+                )
+                for name, value in RIGID_GEOM_CONTACT_ATTRIBUTES.items():
+                    self.assertEqual(geom.attrib[name], value)
+            assets = root.findall("./asset/mesh")
+            self.assertEqual(len(assets), 3)
+            collision_assets = [
+                mesh for mesh in assets
+                if mesh.attrib["name"].startswith(RIGID_DECOMPOSITION_ASSET_PREFIX)
+            ]
+            self.assertTrue(all(mesh.attrib["scale"] == "1 1 1" for mesh in collision_assets))
+
+            try:
+                import mujoco
+            except ImportError:
+                return
+            model = mujoco.MjModel.from_xml_path(str(path))
+            object_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "object")
+            self.assertEqual(model.nq, 7)
+            self.assertEqual(model.nv, 6)
+            self.assertAlmostEqual(float(model.body_mass[object_id]), 0.75)
+            self.assertTrue(np.allclose(model.body_inertia[object_id], [0.1, 0.2, 0.3]))
+
     def test_rigid_branch_uses_mesh_geom_and_preserves_dynamics_and_contacts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "model.xml"

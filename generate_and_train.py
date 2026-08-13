@@ -1,6 +1,8 @@
 import argparse, os, re, subprocess, sys
 from pipeline_generate import (
+    CoACDParameters,
     DEFAULT_DEFORMABLE_PRESET,
+    RIGID_COLLISION_REPRESENTATIONS,
     build_candidate_standalone,
     deformable_preset_names,
     deformable_preset_spawn_position,
@@ -134,6 +136,16 @@ def main():
                    help="Named rubber-like deformable material/contact/solver preset.")
     p.add_argument('--rigid-mesh-cache', default=None,
                    help="Shared source-hash cache for converted rigid OBJ surfaces.")
+    p.add_argument(
+        '--rigid-collision-representation',
+        choices=RIGID_COLLISION_REPRESENTATIONS,
+        default='single_mesh',
+        help="Explicit validation selector; production remains single_mesh until accepted.",
+    )
+    p.add_argument('--coacd-threshold-mm', type=float, default=None,
+                   help="Required physical CoACD threshold for convex_decomposition.")
+    p.add_argument('--coacd-max-convex-hull', type=int, default=-1,
+                   help="Optional CoACD piece cap; -1 is fidelity-driven.")
     p.add_argument('--skip-deformable-validation', action='store_true',
                    help="Skip XML/Gym/action-rollout validation before training deformable objects.")
     p.add_argument('--preflight-passive-steps', type=int, default=2000,
@@ -162,6 +174,18 @@ def main():
         args.trainer = forwarded_trainer
 
     task_cfg = parse_task_arg(args.task)
+    decomposition_parameters = None
+    if args.rigid_collision_representation == "convex_decomposition":
+        if args.coacd_threshold_mm is None or args.coacd_threshold_mm <= 0.0:
+            p.error("convex_decomposition requires a positive --coacd-threshold-mm")
+        decomposition_parameters = CoACDParameters(
+            threshold_m=args.coacd_threshold_mm / 1000.0,
+            max_convex_hull=args.coacd_max_convex_hull,
+            resolution=1000,
+            mcts_iterations=100,
+        )
+    elif args.coacd_threshold_mm is not None or args.coacd_max_convex_hull != -1:
+        p.error("CoACD parameters require --rigid-collision-representation convex_decomposition")
     physics_mode = args.physics_mode or ("deformable" if args.deformable else "rigid")
     if args.deformable and physics_mode != "deformable":
         raise SystemExit("ERROR: --deformable conflicts with --physics-mode rigid")
@@ -241,6 +265,8 @@ def main():
         object_inertia=object_inertia,
         deformable_preset=args.deformable_preset,
         rigid_mesh_cache_dir=rigid_mesh_cache,
+        rigid_collision_representation=args.rigid_collision_representation,
+        rigid_decomposition_parameters=decomposition_parameters,
     )
 
     xml_abs = os.path.abspath(paths["env"])  # <-- make it absolute

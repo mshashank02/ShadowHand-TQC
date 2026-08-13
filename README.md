@@ -229,9 +229,22 @@ Flags after `--` are forwarded directly to `ShadowHand_TQC.py` and control RL tr
 | `--candidate-id` | Candidate identifier | No direct physics effect | Used in metrics/logging metadata |
 | `--physics-mode rigid\|deformable` | Object collision representation | Yes | Selects cached rigid mesh-geom conversion or the existing deformable flex path; conflicting `--deformable` input fails closed |
 | `--rigid-mesh-cache` | Shared converted-surface cache | Indirectly | Reuses a source-hash/converter-version OBJ across tactile candidates |
+| `--rigid-collision-representation single_mesh\|convex_decomposition` | Validation-only rigid collision selector | Yes | Keeps `single_mesh` as the default; decomposition requires an explicit CoACD threshold and remains unapproved for production |
+| `--coacd-threshold-mm` | Convex-decomposition real-metric threshold | Yes | Required only with `convex_decomposition`; participates in the geometry cache key |
+| `--coacd-max-convex-hull` | Optional output-piece cap | Yes | Validation control recorded in the decomposition manifest; `-1` means uncapped |
 | `--object-size small\|medium\|large` | Object size label override | Yes | Scales object mesh size, radius, mass, inertia, and spawn height |
 | `--force` | Regenerate outputs even if cached | Indirectly | Rewrites generated candidate env/assets |
 | `--trainer cpu\|gpu` | Training implementation | No | Keeps the SB3 CPU reference by default or selects direct rigid-geom MJWarp/CUDA training |
+
+Convex decomposition is currently an explicit development/validation mode, not a
+scientifically approved study default. The worst-object geometry sweep reached
+0.239/0.478/0.799 mm p95/p99/max error at 87 pieces, but CPU contact testing found
+that every bare decomposition omits the original rigid-flex 1.25 mm collision
+radius. This causes about 1.25 mm late palm/macro/roughness contact and zero tactile
+response at the matched original-flex pose. The result is Outcome C: do not use the
+decomposition selector for production GPU studies or run all 24 objects until a
+radius-aware representation passes the controlled CPU fixtures. See
+`generated/convex_decomposition_validation/convex_decomposition_report.md`.
 
 ### Study correction: requested versus effective sensor allocation
 
@@ -264,12 +277,20 @@ Thus candidate names record requested coordinates, while their XMLs contain a
 different realized allocation. Counts below were verified by locally regenerating
 and counting every `<touch>` element in the corresponding sensor XML:
 
-| Existing candidate ID | Intended P/Px/T | Realized P/Px/T | Requested α | Requested β | Effective α | Effective β |
-|---|---:|---:|---:|---:|---:|---:|
-| `n0500_a0p3_b0p6` | 150 / 140 / 210 | **78 / 301 / 121** | 0.300 | 0.600 | **0.1560** | **0.2867** |
-| `n1000_a0p1_b0p9` | 100 / 90 / 810 | **74 / 272 / 654** | 0.100 | 0.900 | **0.0740** | **0.7063** |
-| `n0500_a0p5_b0p2` | 250 / 200 / 50 | **111 / 365 / 24** | 0.500 | 0.200 | **0.2220** | **0.0617** |
-| `n0200_a0p7_b0p5` | 140 / 30 / 30 | **95 / 83 / 22** | 0.700 | 0.500 | **0.4750** | **0.2095** |
+| Candidate | N | α | β | Rppx | Rpt | Intended Palm | Intended Phalanx | Intended Tips | Actual Palm | Actual Phalanx | Actual Tips | Tip Density | Palm Density | Phalanx Density | Effective α | Effective β |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `n0500_a0p3_b0p6` | 500 | 0.3 | 0.6 | 1.071429 | 0.714286 | 150 | 140 | 210 | **78** | **301** | **121** | **0.016822** | **0.011896** | **0.011196** | **0.1560** | **0.2867** |
+| `n1000_a0p1_b0p9` | 1000 | 0.1 | 0.9 | 1.111111 | 0.123457 | 100 | 90 | 810 | **74** | **272** | **654** | **0.090922** | **0.011286** | **0.010117** | **0.0740** | **0.7063** |
+| `n0500_a0p5_b0p2` | 500 | 0.5 | 0.2 | 1.25 | 5.0 | 250 | 200 | 50 | **111** | **365** | **24** | **0.003337** | **0.016928** | **0.013576** | **0.2220** | **0.0617** |
+| `n0200_a0p7_b0p5` | 200 | 0.7 | 0.5 | 4.666667 | 4.666667 | 140 | 30 | 30 | **95** | **83** | **22** | **0.003059** | **0.014488** | **0.003087** | **0.4750** | **0.2095** |
+
+The realized regional densities use the same area weights as the generator:
+
+```text
+tip_density      = actual_tips / At           (At=7193)
+palm_density     = actual_palm / Ap           (Ap=6557)
+phalanx_density  = actual_phalanx / Apx       (Apx=26885)
+```
 
 Effective coordinates are reconstructed from the XML counts as:
 

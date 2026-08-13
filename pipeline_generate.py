@@ -2,13 +2,22 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import annotations
-from typing import Dict, List, Tuple
+from typing import Dict, List, Sequence, Tuple
 import os, sys, math, argparse, re, shutil, json, struct
 import xml.etree.ElementTree as ET
 from collections import defaultdict, namedtuple
 from pathlib import Path
 
-from object_conversion import convert_gmsh_to_rigid_surface, scaled_geometry_metrics
+import numpy as np
+
+from object_conversion import (
+    CoACDParameters,
+    convert_gmsh_to_rigid_surface,
+    decompose_surface_cached,
+    extract_exterior_surface,
+    parse_gmsh_v2,
+    scaled_geometry_metrics,
+)
 
 # =========================
 # util: formatting + paths
@@ -79,6 +88,9 @@ SIZE_SPAWN_HEIGHTS = {
 }
 
 RIGID_MESH_ASSET_NAME = "custom_object_mesh"
+RIGID_VISUAL_MESH_ASSET_NAME = "custom_object_visual_mesh"
+RIGID_DECOMPOSITION_ASSET_PREFIX = "custom_object_collision_piece"
+RIGID_COLLISION_REPRESENTATIONS = ("single_mesh", "convex_decomposition")
 RIGID_GEOM_CONTACT_ATTRIBUTES = {
     "friction": "1 0.005 0.0001",
     "condim": "3",
@@ -1125,6 +1137,8 @@ def patch_env_object_to_custom_msh(
     flex_radius: str = "0.001",
     deformable_preset: str = DEFAULT_DEFORMABLE_PRESET,
     deformable_option_overrides: Dict[str, str] | None = None,
+    rigid_collision_representation: str = "single_mesh",
+    rigid_decomposition_files_for_xml: Sequence[str] | None = None,
 ):
     """
     Replace the default object with a custom deformable flex or native rigid mesh.
@@ -1173,23 +1187,61 @@ def patch_env_object_to_custom_msh(
     if object_body is None:
         raise SystemExit(f"ERROR: no <body name='object'> found in {env_xml}")
 
+    if rigid_collision_representation not in RIGID_COLLISION_REPRESENTATIONS:
+        raise ValueError(
+            "rigid_collision_representation must be one of "
+            f"{RIGID_COLLISION_REPRESENTATIONS}"
+        )
+    if deformable and rigid_collision_representation != "single_mesh":
+        raise ValueError("deformable objects do not accept a rigid collision representation")
+
     if not deformable:
         if not rigid_surface_file_for_xml:
             raise ValueError("rigid custom objects require an exterior surface mesh")
+        piece_files = tuple(rigid_decomposition_files_for_xml or ())
+        if rigid_collision_representation == "convex_decomposition" and not piece_files:
+            raise ValueError("convex decomposition requires at least one collision piece")
+        if rigid_collision_representation == "single_mesh" and piece_files:
+            raise ValueError("single_mesh does not accept decomposition collision pieces")
         asset = root.find("asset")
         if asset is None:
             asset = ET.SubElement(root, "asset")
-        for old_mesh in list(asset.findall(f"./mesh[@name='{RIGID_MESH_ASSET_NAME}']")):
-            asset.remove(old_mesh)
-        ET.SubElement(
-            asset,
-            "mesh",
-            {
-                "name": RIGID_MESH_ASSET_NAME,
-                "file": rigid_surface_file_for_xml,
-                "scale": flex_scale,
-            },
-        )
+        for old_mesh in list(asset.findall("./mesh")):
+            name = old_mesh.get("name", "")
+            if name in {RIGID_MESH_ASSET_NAME, RIGID_VISUAL_MESH_ASSET_NAME} or name.startswith(
+                RIGID_DECOMPOSITION_ASSET_PREFIX
+            ):
+                asset.remove(old_mesh)
+        if rigid_collision_representation == "single_mesh":
+            ET.SubElement(
+                asset,
+                "mesh",
+                {
+                    "name": RIGID_MESH_ASSET_NAME,
+                    "file": rigid_surface_file_for_xml,
+                    "scale": flex_scale,
+                },
+            )
+        else:
+            ET.SubElement(
+                asset,
+                "mesh",
+                {
+                    "name": RIGID_VISUAL_MESH_ASSET_NAME,
+                    "file": rigid_surface_file_for_xml,
+                    "scale": flex_scale,
+                },
+            )
+            for index, piece_file in enumerate(piece_files):
+                ET.SubElement(
+                    asset,
+                    "mesh",
+                    {
+                        "name": f"{RIGID_DECOMPOSITION_ASSET_PREFIX}_{index:03d}",
+                        "file": piece_file,
+                        "scale": "1 1 1",
+                    },
+                )
 
     # Preserve ordering expected by other tooling: joint + inertial + collision + site.
     object_body.set("pos", object_pos)
@@ -1309,16 +1361,44 @@ def patch_env_object_to_custom_msh(
             "inertial",
             {"pos": "0 0 0", "mass": str(object_mass), "diaginertia": object_inertia},
         )
-        ET.SubElement(
-            object_body,
-            "geom",
-            {
-                "name": "object",
-                "type": "mesh",
-                "mesh": RIGID_MESH_ASSET_NAME,
-                **RIGID_GEOM_CONTACT_ATTRIBUTES,
-            },
-        )
+        if rigid_collision_representation == "single_mesh":
+            ET.SubElement(
+                object_body,
+                "geom",
+                {
+                    "name": "object",
+                    "type": "mesh",
+                    "mesh": RIGID_MESH_ASSET_NAME,
+                    **RIGID_GEOM_CONTACT_ATTRIBUTES,
+                },
+            )
+        else:
+            ET.SubElement(
+                object_body,
+                "geom",
+                {
+                    "name": "object_visual",
+                    "type": "mesh",
+                    "mesh": RIGID_VISUAL_MESH_ASSET_NAME,
+                    "contype": "0",
+                    "conaffinity": "0",
+                    "group": "2",
+                    "rgba": "0.7 0.8 1 1",
+                },
+            )
+            for index, _ in enumerate(rigid_decomposition_files_for_xml or ()):
+                ET.SubElement(
+                    object_body,
+                    "geom",
+                    {
+                        "name": f"object_collision_{index:03d}",
+                        "type": "mesh",
+                        "mesh": f"{RIGID_DECOMPOSITION_ASSET_PREFIX}_{index:03d}",
+                        "rgba": "0 0 0 0",
+                        "group": "3",
+                        **RIGID_GEOM_CONTACT_ATTRIBUTES,
+                    },
+                )
         ET.SubElement(
             object_body,
             "site",
@@ -1348,7 +1428,13 @@ def _parse_scale_triplet(scale: str) -> tuple[float, float, float]:
     return values  # type: ignore[return-value]
 
 
-def _rigid_env_matches_surface(env_xml: str, surface_basename: str) -> bool:
+def _rigid_env_matches_surface(
+    env_xml: str,
+    surface_basename: str,
+    *,
+    representation: str = "single_mesh",
+    piece_basenames: Sequence[str] = (),
+) -> bool:
     if not os.path.isfile(env_xml):
         return False
     try:
@@ -1358,15 +1444,42 @@ def _rigid_env_matches_surface(env_xml: str, surface_basename: str) -> bool:
     object_body = root.find("./worldbody/body[@name='object']")
     if object_body is None or object_body.find("flexcomp") is not None:
         return False
-    geom = object_body.find("./geom[@name='object']")
-    mesh = root.find(f"./asset/mesh[@name='{RIGID_MESH_ASSET_NAME}']")
-    return bool(
-        geom is not None
-        and geom.get("type") == "mesh"
-        and geom.get("mesh") == RIGID_MESH_ASSET_NAME
-        and mesh is not None
-        and mesh.get("file") == surface_basename
-    )
+    if representation == "single_mesh":
+        geom = object_body.find("./geom[@name='object']")
+        mesh = root.find(f"./asset/mesh[@name='{RIGID_MESH_ASSET_NAME}']")
+        return bool(
+            geom is not None
+            and geom.get("type") == "mesh"
+            and geom.get("mesh") == RIGID_MESH_ASSET_NAME
+            and mesh is not None
+            and mesh.get("file") == surface_basename
+        )
+    if representation != "convex_decomposition" or not piece_basenames:
+        return False
+    visual = object_body.find("./geom[@name='object_visual']")
+    visual_mesh = root.find(f"./asset/mesh[@name='{RIGID_VISUAL_MESH_ASSET_NAME}']")
+    if not (
+        visual is not None
+        and visual.get("mesh") == RIGID_VISUAL_MESH_ASSET_NAME
+        and visual.get("contype") == "0"
+        and visual.get("conaffinity") == "0"
+        and visual_mesh is not None
+        and visual_mesh.get("file") == surface_basename
+    ):
+        return False
+    geoms = object_body.findall("./geom")
+    collisions = [geom for geom in geoms if geom.get("name", "").startswith("object_collision_")]
+    if len(collisions) != len(piece_basenames):
+        return False
+    for index, basename in enumerate(piece_basenames):
+        asset_name = f"{RIGID_DECOMPOSITION_ASSET_PREFIX}_{index:03d}"
+        asset = root.find(f"./asset/mesh[@name='{asset_name}']")
+        geom = object_body.find(f"./geom[@name='object_collision_{index:03d}']")
+        if asset is None or asset.get("file") != basename or asset.get("scale") != "1 1 1":
+            return False
+        if geom is None or geom.get("mesh") != asset_name:
+            return False
+    return True
 
 
 def write_rigid_representation_manifest(
@@ -1378,11 +1491,19 @@ def write_rigid_representation_manifest(
     object_mass: float,
     object_inertia: str,
     object_pos: str,
+    rigid_collision_representation: str = "single_mesh",
+    decomposition_result=None,
+    generated_piece_paths: Sequence[str] = (),
 ) -> None:
     scale = _parse_scale_triplet(mesh_scale)
     geometry = conversion_result.manifest["geometry"]
     payload = {
-        "representation": "rigid_mesh_geom",
+        "representation": (
+            "rigid_mesh_geom"
+            if rigid_collision_representation == "single_mesh"
+            else "convex_decomposition"
+        ),
+        "rigid_collision_representation": rigid_collision_representation,
         "source_mesh": str(conversion_result.source_path),
         "source_hash": conversion_result.source_hash,
         "converted_mesh": os.path.abspath(generated_surface_path),
@@ -1409,8 +1530,24 @@ def write_rigid_representation_manifest(
         "diaginertia": [float(value) for value in object_inertia.split()],
         "body_position": [float(value) for value in object_pos.split()],
         "free_joint": "object:joint",
-        "mesh_asset": RIGID_MESH_ASSET_NAME,
-        "geom_name": "object",
+        "visual_mesh_asset": (
+            RIGID_MESH_ASSET_NAME
+            if rigid_collision_representation == "single_mesh"
+            else RIGID_VISUAL_MESH_ASSET_NAME
+        ),
+        "collision_mesh_assets": (
+            [RIGID_MESH_ASSET_NAME]
+            if rigid_collision_representation == "single_mesh"
+            else [
+                f"{RIGID_DECOMPOSITION_ASSET_PREFIX}_{index:03d}"
+                for index in range(len(generated_piece_paths))
+            ]
+        ),
+        "collision_geom_names": (
+            ["object"]
+            if rigid_collision_representation == "single_mesh"
+            else [f"object_collision_{index:03d}" for index in range(len(generated_piece_paths))]
+        ),
         "contact_parameters": dict(RIGID_GEOM_CONTACT_ATTRIBUTES),
         "unmapped_rigid_flex_parameters": {
             "radius": "no exact native mesh-geom equivalent",
@@ -1418,6 +1555,34 @@ def write_rigid_representation_manifest(
             "internal": "internal tetrahedral faces were removed during conversion",
         },
     }
+    # Preserve legacy keys consumed by existing single-mesh tooling.
+    if rigid_collision_representation == "single_mesh":
+        payload["mesh_asset"] = RIGID_MESH_ASSET_NAME
+        payload["geom_name"] = "object"
+    else:
+        if decomposition_result is None or not generated_piece_paths:
+            raise ValueError("convex decomposition manifest requires decomposition metadata")
+        payload["original_visual"] = {
+            "mesh": os.path.abspath(generated_surface_path),
+            "collision_disabled": True,
+            "mesh_scale": list(scale),
+        }
+        payload["decomposition"] = {
+            "manifest": str(decomposition_result.manifest_path),
+            "cache_key": decomposition_result.cache_key,
+            "cache_reused": bool(decomposition_result.cache_reused),
+            "algorithm": decomposition_result.manifest["algorithm"],
+            "algorithm_version": decomposition_result.manifest["algorithm_version"],
+            "converter_version": decomposition_result.manifest["converter_version"],
+            "parameters": decomposition_result.manifest["parameters"],
+            "piece_count": decomposition_result.manifest["piece_count"],
+            "piece_hashes": [piece["sha256"] for piece in decomposition_result.manifest["pieces"]],
+            "generated_piece_paths": [os.path.abspath(path) for path in generated_piece_paths],
+            "collision_piece_units": "metres",
+            "mesh_scale": [1.0, 1.0, 1.0],
+            "all_pieces_same_body": "object",
+            "independent_dynamic_bodies": 0,
+        }
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, sort_keys=True)
@@ -1469,11 +1634,31 @@ def build_candidate_standalone(
     object_inertia: str = "1e-3 1e-3 1e-3",
     deformable_preset: str = DEFAULT_DEFORMABLE_PRESET,
     rigid_mesh_cache_dir: str | None = None,
+    rigid_collision_representation: str = "single_mesh",
+    rigid_decomposition_parameters: CoACDParameters | None = None,
 ) -> Dict[str, str]:
     """
     No side effects. Returns dict with paths:
       {dir, shared, robot, env, env_basename, tag}
     """
+    if rigid_collision_representation not in RIGID_COLLISION_REPRESENTATIONS:
+        raise ValueError(
+            f"unsupported rigid collision representation {rigid_collision_representation!r}"
+        )
+    if deformable_object and rigid_collision_representation != "single_mesh":
+        raise ValueError("deformable generation cannot use convex decomposition")
+    if custom_msh is None and rigid_collision_representation != "single_mesh":
+        raise ValueError("convex decomposition is only defined for custom GMSH objects")
+    if (
+        custom_msh is not None
+        and not deformable_object
+        and rigid_collision_representation == "convex_decomposition"
+        and rigid_decomposition_parameters is None
+    ):
+        raise ValueError(
+            "convex_decomposition is validation-only until selected; provide explicit "
+            "rigid_decomposition_parameters"
+        )
     paths = make_candidate_paths(out_root, task, Ntotal, Rppx, Rpt)
     builtin_msh: str | None = None
     deformable_option_overrides = None
@@ -1490,7 +1675,9 @@ def build_candidate_standalone(
         deformable_option_overrides = EGG_DEFORMABLE_FAST_OPTION_OVERRIDES
 
     rigid_conversion = None
+    rigid_decomposition = None
     rigid_surface_dst: str | None = None
+    rigid_piece_destinations: list[str] = []
     msh_dst: str | None = None
     msh_basename: str | None = None
     if custom_msh:
@@ -1520,13 +1707,44 @@ def build_candidate_standalone(
             paths["rigid_surface"] = rigid_surface_dst
             paths["rigid_conversion_manifest"] = str(rigid_conversion.conversion_manifest_path)
             paths["rigid_cache_key"] = rigid_conversion.cache_key
+            if rigid_collision_representation == "convex_decomposition":
+                assert rigid_decomposition_parameters is not None
+                parsed = parse_gmsh_v2(custom_msh)
+                surface = extract_exterior_surface(parsed)
+                scale_values = _parse_scale_triplet(flex_scale)
+                rigid_decomposition = decompose_surface_cached(
+                    source_path=custom_msh,
+                    exterior_path=rigid_conversion.mesh_path,
+                    vertices_source_units=np.asarray(surface.vertices, dtype=np.float64),
+                    faces=np.asarray(surface.faces, dtype=np.int64),
+                    scale_m_per_source_unit=scale_values,
+                    cache_root=os.path.join(cache_dir, "decomposition"),
+                    parameters=rigid_decomposition_parameters,
+                )
+                for index, piece_path in enumerate(rigid_decomposition.piece_paths):
+                    destination = os.path.join(
+                        custom_mesh_dst_dir,
+                        f"custom_object_{rigid_decomposition.cache_key[:16]}_piece_{index:03d}.obj",
+                    )
+                    if force or not os.path.exists(destination):
+                        shutil.copy2(piece_path, destination)
+                        print(f"[OK] Installed cached convex piece: {destination}")
+                    else:
+                        print(f"[SKIP] Using cached convex piece: {destination}")
+                    rigid_piece_destinations.append(destination)
+                paths["rigid_decomposition_manifest"] = str(rigid_decomposition.manifest_path)
+                paths["rigid_decomposition_cache_key"] = rigid_decomposition.cache_key
+                paths["rigid_collision_piece_count"] = str(len(rigid_piece_destinations))
 
     # 1) shared + robot
     build_shared_and_robot(Ap, Apx, At, Ntotal, Rppx, Rpt, Ap1, Ap2, base_xml, paths["shared"], paths["robot"], force=force)
     # 2) standalone env that includes the basenames
     needs_env = force or (not os.path.exists(paths["env"]))
     if rigid_surface_dst is not None and not _rigid_env_matches_surface(
-        paths["env"], os.path.basename(rigid_surface_dst)
+        paths["env"],
+        os.path.basename(rigid_surface_dst),
+        representation=rigid_collision_representation,
+        piece_basenames=tuple(os.path.basename(path) for path in rigid_piece_destinations),
     ):
         needs_env = True
     if needs_env:
@@ -1552,6 +1770,10 @@ def build_candidate_standalone(
                 flex_radius=flex_radius,
                 deformable_preset=deformable_preset,
                 deformable_option_overrides=deformable_option_overrides,
+                rigid_collision_representation=rigid_collision_representation,
+                rigid_decomposition_files_for_xml=tuple(
+                    os.path.basename(path) for path in rigid_piece_destinations
+                ),
             )
         print(f"[OK] Wrote standalone env: {paths['env']}")
     else:
@@ -1567,6 +1789,9 @@ def build_candidate_standalone(
             object_mass=float(object_mass),
             object_inertia=object_inertia,
             object_pos=object_pos,
+            rigid_collision_representation=rigid_collision_representation,
+            decomposition_result=rigid_decomposition,
+            generated_piece_paths=rigid_piece_destinations,
         )
         paths["rigid_representation_manifest"] = representation_manifest
         print(f"[OK] Wrote rigid representation manifest: {representation_manifest}")
@@ -1664,6 +1889,24 @@ def main():
     p.add_argument("--out-root", default="generated", help="Root folder for standalone candidates (each under <N>_<r1>_<r2>/).")
     p.add_argument("--rigid-mesh-cache", default=None,
                    help="Shared source-hash cache for converted rigid OBJ surfaces.")
+    p.add_argument(
+        "--rigid-collision-representation",
+        choices=RIGID_COLLISION_REPRESENTATIONS,
+        default="single_mesh",
+        help="Explicit validation selector; single_mesh remains the default until decomposition is accepted.",
+    )
+    p.add_argument(
+        "--coacd-threshold-mm",
+        type=float,
+        default=None,
+        help="Required physical CoACD threshold when convex_decomposition is selected.",
+    )
+    p.add_argument(
+        "--coacd-max-convex-hull",
+        type=int,
+        default=-1,
+        help="Optional CoACD piece cap; -1 leaves the sweep fidelity-driven.",
+    )
     p.add_argument("--force", action="store_true", help="Overwrite/cached outputs for this candidate.")
 
     # Allocation / areas / ratios
@@ -1680,6 +1923,18 @@ def main():
     p.add_argument("--backup", action="store_true", help="(Legacy mode) Backup main XML to .bak before editing")
 
     args = p.parse_args()
+    decomposition_parameters = None
+    if args.rigid_collision_representation == "convex_decomposition":
+        if args.coacd_threshold_mm is None or args.coacd_threshold_mm <= 0.0:
+            p.error("convex_decomposition requires a positive --coacd-threshold-mm")
+        decomposition_parameters = CoACDParameters(
+            threshold_m=args.coacd_threshold_mm / 1000.0,
+            max_convex_hull=args.coacd_max_convex_hull,
+            resolution=1000,
+            mcts_iterations=100,
+        )
+    elif args.coacd_threshold_mm is not None or args.coacd_max_convex_hull != -1:
+        p.error("CoACD parameters require --rigid-collision-representation convex_decomposition")
     task_cfg = parse_task_arg(args.task)
     if args.deformable and task_cfg["custom_msh"] is None:
         if task_cfg["template_task"] != "egg":
@@ -1723,6 +1978,8 @@ def main():
             object_inertia=object_inertia,
             deformable_preset=args.deformable_preset,
             rigid_mesh_cache_dir=args.rigid_mesh_cache,
+            rigid_collision_representation=args.rigid_collision_representation,
+            rigid_decomposition_parameters=decomposition_parameters,
         )
         # Emit a small machine-friendly summary for BO loops
         print(json.dumps(paths, indent=2))

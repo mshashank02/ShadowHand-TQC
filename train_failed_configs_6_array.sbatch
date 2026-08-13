@@ -1,4 +1,4 @@
-#!/bin/bash
++#!/bin/bash
 #SBATCH --account=bewv-dtai-gh
 #SBATCH --job-name=retry-failed6
 #SBATCH --partition=ghx4

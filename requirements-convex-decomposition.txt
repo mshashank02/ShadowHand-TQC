@@ -1,0 +1,6 @@
+# Offline geometry-generation and validation dependencies.  These are not needed
+# in a deployed trainer after cached convex OBJ assets have been generated.
+coacd==1.0.11
+manifold3d==3.5.2
+trimesh==5.0.0
+rtree==1.4.1

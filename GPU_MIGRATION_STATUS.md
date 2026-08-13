@@ -1,12 +1,13 @@
 # GPU Migration Status
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 
 ## Current phase
 
-Phase II native rigid-mesh collision migration — implementation and required real-
-object measurements complete; documentation and full regression verification in
-progress
+Phase II native rigid-mesh collision migration — worst-object bare convex-
+decomposition study complete with CPU representation-fidelity Outcome C; Warp,
+all-24 generation, and long-run validation remain blocked pending a radius-aware
+rigid collision representation
 
 ## Phase II checkpoint: pre-implementation audit
 
@@ -753,3 +754,370 @@ compare success distributions/AULC and candidate ranking stability while monitor
 long-run contact/constraint high-water marks. Repeat N=1000 after N=500 is stable.
 The current 12k smoke is only a pipeline gate. Flex/custom-mesh GPU support remains
 out of scope, so existing mesh studies continue on the CPU reference.
+
+## Convexity audit checkpoint (2026-08-12)
+
+### Phase completed
+
+Completed the diagnostic convexity/collision-geometry audit of exactly the 24 rigid
+objects in `study_objects/sphere_study_v1/manifest.csv`. No production physics,
+generated runtime XML, trainer, TQC, HER, replay, environment, or study/GPBO code was
+changed.
+
+### Commands
+
+```bash
+python -m unittest tests.test_object_conversion tests.test_rigid_mesh_generation -v
+python -m unittest tests.test_convexity_audit -v
+MPLCONFIGDIR=/tmp/matplotlib-convexity OPENBLAS_NUM_THREADS=1 \
+  python object_conversion/audit_convexity.py --all
+```
+
+The local execution harness imposed a roughly 30-second command boundary, so this
+session checkpointed each object with `--object-id`, asserted all 24 used 100,000
+samples, then assembled them with `--assemble-existing`. The ordinary `--all`
+command remains the primary reusable interface.
+
+### Method and validation
+
+- Production-scaled exterior surfaces are compared directly with their SciPy/Qhull
+  convex hulls; this is not a repeat of source-volume versus extracted-surface
+  conversion validation.
+- MuJoCo 3.11.0 directly compiled the representative 1,666-vertex/3,328-face OBJ
+  with `mesh_graphadr=0` and a 989-vertex/1,974-face convex graph, exactly matching
+  SciPy/Qhull. The CPU reference remains MuJoCo 3.3.1; production does not limit
+  `maxhullvert`.
+- Gap is the minimum normalized hull half-space slack, i.e. the shortest distance
+  from an interior surface point to the convex hull boundary. Sampling is fixed-seed,
+  deterministic, uniform by surface area, and uses 100,000 points/object.
+- Every source vertex is checked separately. Sampled maxima are explicitly labeled
+  estimates rather than continuous exact maxima.
+- Synthetic convex-cube and known indented-cube controls pass. The concave control
+  recovers exactly 20% volume inflation, the known 0.5-unit gap, and the correct
+  maximum location.
+- Worst-case 10k/50k/100k/250k p95, p99, and sampled maximum are stable; the 250k
+  values are 2.545/3.427/4.460 mm.
+
+### Summary measurements
+
+- maximum volume inflation: **4.423%**;
+- maximum 100k p95 gap: **2.551 mm**;
+- maximum 100k p99 gap: **3.420 mm**;
+- maximum 100k sampled gap: **4.459 mm**;
+- maximum deterministic vertex gap: **4.459 mm**;
+- largest normalized sampled maximum: **3.589%** of bounding-box diagonal;
+- maximum surface area estimate above 0.1 mm: **41.47%**;
+- worst object: `obj_size-large_ar-high_macro-high_rough-high`.
+
+Macro-high is systematically more convexified than macro-low: mean p99 is
+2.178 versus 0.227 mm and mean volume inflation is 3.078% versus 0.254%. The macro
+distinction remains visible to collision (matched hull p95 differences
+3.993-8.367 mm), but its concave component is suppressed. Roughness is encoded by
+distinct geometry while rigid friction remains fixed; rough-high mean p99 is
+1.566 versus 0.839 mm, so convexification directly affects that factor as well.
+
+### Artifacts
+
+- `object_conversion/audit_convexity.py`
+- `tests/test_convexity_audit.py`
+- `generated/convexity_audit/convexity_audit.csv`
+- `generated/convexity_audit/convexity_audit.json`
+- `generated/convexity_audit/convexity_audit.md`
+- `generated/convexity_audit/converted_surfaces/`
+- `generated/convexity_audit/figures/`
+- summary appended to `generated/gpu_validation/validation_report.md`
+
+Regression verification: the focused audit/conversion/generation set passed 16/16
+tests, artifact integrity checks passed, and the final full CPU suite passed
+**43/43** in the `ShadowHand` Conda environment. The base Python lacks PyTorch and
+therefore cannot import four unrelated study test modules; those same modules pass
+in the reference environment. The GPU suite was not required because the audit adds
+standalone diagnostic code and does not alter shared or production GPU code.
+
+### Conclusion and exact next step
+
+This is **Outcome C**. Millimeter-scale gaps cover large surface regions and are
+comparable to the 7.05 mm distal-finger collision radius and 2.5 mm tactile-site
+half-thickness; the current single hull is not scientifically safe for the complete
+factorial object study. Long-run multi-seed CPU/GPU learning validation is **not
+approved as the next phase** for all 24 objects.
+
+The exact next step is a separate, targeted representation study for the affected
+macro-high and rough-high families: evaluate convex decomposition fidelity and cost,
+then run controlled fingertip/contact comparisons. Do not silently replace the
+production representation. Resume expensive learning validation only after the
+collision model is shown to preserve the intended macro and roughness factors.
+
+## Convex decomposition checkpoint: Phases A-B (2026-08-12)
+
+### Completed work
+
+- Selected **CoACD 1.0.11** after verifying its current Linux/Python support,
+  deterministic seed, real-metric concavity threshold, hull-count limit, MIT
+  license, and May 2026 release. VHACD 4.1 remains a BSD-3-Clause fallback, not the
+  primary implementation.
+- Selected **Manifold3D 3.5.2** for robust boolean unions, plus **Trimesh 5.0.0**
+  and **Rtree 1.4.1** for exact closest-triangle queries. This prevents overlapping
+  piece volume from being summed and prevents internal overlap faces from entering
+  surface-distance metrics.
+- Added `requirements-convex-decomposition.txt`. These dependencies are required
+  only for offline asset generation/auditing; cached OBJ collision pieces do not
+  add a trainer runtime dependency.
+- Added `object_conversion/convex_decomposition.py`: fixed-seed, real-metric CoACD;
+  full-parameter/source/exterior/scale/version cache keys; stable piece ordering;
+  atomic cache writes; deterministic OBJ output in metres; per-piece SHA-256; and
+  explicit watertightness, winding, convex-hull-volume, half-space, and index
+  validation.
+- Added `object_conversion/audit_decomposition.py`: Manifold Mesh64 boolean union,
+  independent boundary-volume cross-check, closest-triangle surface distances, and
+  exact union-membership classification from convex half-spaces. It reports signed
+  volume error, absolute gap statistics, and separate overfill/underfill fractions.
+- Added the checkpointable worst-object sweep driver
+  `object_conversion/validate_convex_decomposition.py`. Each level writes its cache,
+  union OBJ, metric arrays, and JSON independently before assembly. Heatmaps share
+  the single-hull 4.459 mm physical colour range.
+- CoACD pilots on `obj_size-large_ar-high_macro-high_rough-high`, seed 20260812,
+  preprocessing off, real metric on, produced 4 pieces at a 4 mm threshold and 8
+  pieces at 2 mm. All eight 2 mm pieces passed Manifold, and their boolean union was
+  a valid 2,195-vertex/4,366-triangle boundary. These pilots chose the sweep scale;
+  they are not yet final 100k-sample sweep results.
+
+### Tests and commands
+
+```bash
+/tmp/shadowhand-mjw.7EqKBl/bin/pip install \
+  coacd==1.0.11 manifold3d==3.5.2 trimesh==5.0.0 rtree==1.4.1
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+  /tmp/shadowhand-mjw.7EqKBl/bin/python -m unittest \
+  tests.test_convex_decomposition tests.test_convexity_audit -v
+```
+
+The 13/13 tests pass. Synthetic controls prove deterministic cache reuse, reject a
+non-convex shell, verify that overlapping boxes have boolean-union volume 1.5 rather
+than summed volume 2.0, and show that an exact two-box concave union has essentially
+zero error while its single hull retains a gap above 0.4 model units.
+
+### Files changed
+
+- `requirements-convex-decomposition.txt`
+- `object_conversion/convex_decomposition.py`
+- `object_conversion/audit_decomposition.py`
+- `object_conversion/validate_convex_decomposition.py`
+- `object_conversion/__init__.py`
+- `tests/test_convex_decomposition.py`
+
+No production MJCF generator, physics backend, TQC, HER, replay, or GPBO behavior
+has changed in Phases A-B. Existing unrelated dirty worktree files were preserved.
+
+### Exact next step
+
+Phase C: add the explicit validation-only `single_mesh` versus
+`convex_decomposition` generator selector; attach every piece to the existing
+`object` body; retain exactly one free joint and the explicit inertial; retain the
+original exterior as a non-colliding visual geom; copy identical contact parameters
+to every piece; and add CPU compile/structure/cache-independence tests. Do not change
+the default representation or run the full sweep until these invariants pass.
+
+## Convex decomposition checkpoint: Phase C (2026-08-12)
+
+### Completed work
+
+- Added the explicit `single_mesh` / `convex_decomposition` selector to
+  `pipeline_generate.py` and `generate_and_train.py`. `single_mesh` remains the
+  default. Decomposition requires an explicit positive physical threshold; CoACD
+  arguments are rejected when the decomposition representation is not selected.
+- The decomposition branch retains the source exterior as `object_visual`, with
+  `contype=0` and `conaffinity=0`, and attaches all transparent convex collision
+  geoms directly to the existing `object` body. It creates no piece bodies or piece
+  joints. Collision OBJ coordinates are metres and assets use scale `1 1 1`;
+  the visual OBJ retains the production size scale.
+- The existing `object:joint` free joint, body position, explicit inertial mass,
+  centre of mass, and diagonal inertia remain authoritative. Every collision piece
+  receives the unchanged friction, `condim`, `solref`, `solimp`, margin, gap,
+  contype, conaffinity, and priority mapping.
+- Extended representation manifests with visual/collision separation, CoACD and
+  converter versions, full parameters, cache key/reuse, piece count/hashes/paths,
+  units/scales, same-body assertion, and zero independent dynamic bodies. Legacy
+  single-mesh manifest keys remain available.
+- Generated a durable four-piece worst-object Phase-C fixture under
+  `generated/convex_decomposition_validation/phase_c_model/` at threshold 4 mm.
+  It compiles in both MuJoCo 3.3.1 and 3.11.0 with `nq=38`, `nv=36`, `nflex=0`,
+  one visual object geom, four colliding object geoms, mass `0.9765625`, and
+  diagonal inertia `0.0030517578125` on every axis. All four compiled contact
+  parameter vectors are identical. MuJoCo 3.11 classifies it as GPU-supported
+  `rigid_mesh_geom`.
+- Generated a second candidate with a different sensor count and allocation. It
+  reused the identical decomposition cache key
+  `69e1b1a687c05f4cd5997ae9fe7e0b25378545b12d8fc4847a69b797b54df2b3`,
+  identical four piece hashes, and no CoACD rerun. This demonstrates decomposition
+  independence from N/alpha/beta.
+
+### Verification
+
+The focused conversion/decomposition/generator suite passes 14/14 tests in the
+temporary validation environment. The new structural test also compiles its MJCF
+and verifies one body, one free joint, explicit mass/inertia, one non-collision
+visual, same-body collision pieces, unit piece scale, and exact contact mappings.
+
+### Files changed
+
+- `pipeline_generate.py`
+- `generate_and_train.py`
+- `tests/test_rigid_mesh_generation.py`
+- Phase-C assets and manifests under
+  `generated/convex_decomposition_validation/phase_c_model/`
+
+No backend, TQC, HER, replay, or GPBO algorithm was changed. The default collision
+representation was not switched.
+
+### Exact next step
+
+Phases D-E: run and checkpoint the five fixed-setting worst-object levels at 100,000
+surface samples; measure the boolean union; assemble the direct single-hull table;
+and generate same-scale heatmaps. Use the results, not nominal labels, to decide
+whether the sweep spans the requested piece-count ranges and whether any candidates
+meet the provisional geometry gates.
+
+## Convex decomposition checkpoint: Phases D-F (2026-08-12)
+
+### Completed work
+
+- Completed five durable 100,000-sample worst-object levels with measured piece
+  counts 4, 11, 24, 36, and 87. Exact results and cache keys are under
+  `generated/convex_decomposition_validation/levels/` and
+  `generated/rigid_mesh_cache/decomposition/`.
+- The fixed CoACD search settings are seed 20260812, preprocessing off, real metric,
+  resolution 1000, 20 MCTS nodes, 100 iterations, depth 3, merge on, no decimation,
+  no extrusion, and 256 maximum vertices per piece. Thresholds are 4.0, 2.0, 1.0
+  with a 24-piece cap, 1.4, and 1.2 mm respectively.
+- An uncapped 1.0 mm diagnostic produced 164 pieces in 265.4 seconds. It is retained
+  at `levels/uncapped_1mm/` but excluded from the practical 4-128 sweep. CoACD's
+  `max_convex_hull` constrains the merge output rather than terminating the search;
+  the 24-piece run therefore still took 243.3 seconds and emitted the expected
+  warning that its capped maximum concavity exceeds the requested threshold.
+- Assembled direct single-hull/decomposition CSV and JSON tables. Robust boolean
+  unions range from 3,302 triangles at four pieces to 14,930 triangles at 87 pieces.
+  All levels use identical source samples and the same distance method.
+- Generated three-view, same-physical-scale heatmaps and coloured piece
+  visualizations. Visual inspection confirms the 0-4.459 mm scale is shared and
+  the bridged concavity progressively disappears.
+- Added matched-factor region analysis. The strongest macro-change quartile has a
+  9.190 mm p95 signal; p95 collision error falls from 2.894 mm for one hull to
+  0.366 mm at 36 pieces and 0.206 mm at 87. The strongest roughness-change quartile
+  has a 2.704 mm p95 signal; p95 error falls from 2.826 mm to 0.413 and 0.359 mm.
+
+### Geometry table
+
+| Representation | Pieces | Volume error | P95 mm | P99 mm | Max mm | >0.1 mm |
+|---|---:|---:|---:|---:|---:|---:|
+| Single hull | 1 | 4.423% | 2.551 | 3.420 | 4.459 | 41.47% |
+| Very coarse | 4 | 1.769% | 1.011 | 1.977 | 3.164 | 31.45% |
+| Coarse | 11 | 0.910% | 0.543 | 0.875 | 1.512 | 25.29% |
+| Medium | 24 | 0.617% | 0.443 | 0.750 | 1.633 | 18.95% |
+| Fine | 36 | 0.443% | 0.316 | 0.538 | 0.799 | 15.49% |
+| Very fine | 87 | 0.324% | 0.239 | 0.478 | 0.799 | 11.73% |
+
+The 87-piece candidate is the first practical-band candidate to pass all provisional
+geometry targets. The 36-piece candidate is close and meets maximum/volume targets.
+The 24-, 36-, and 87-piece representations proceed to CPU contact testing; 11 pieces
+is retained as a coarse reference. This is not yet a production selection.
+
+### Artifacts
+
+- `worst_object_parameter_sweep.csv` and `.json`
+- `geometry_comparison.csv`
+- `feature_region_comparison.csv` and `.json`
+- `convex_decomposition_report.md`
+- `figures/worst_object_same_scale_gap_heatmaps.png`
+- `figures/worst_object_decomposition_pieces.png`
+- per-level union OBJ, arrays, JSON, and decomposition manifests/pieces
+
+### Exact next step
+
+Phases G-H: build the N=500 original rigid-flex, single-hull, 11-, 24-, 36-, and
+87-piece CPU models with identical body/inertial/contact/sensor configuration. Run
+deterministic isolated fingertip, palm, deepest-concavity onset, macro-feature, and
+roughness-feature fixtures. Report first contact, contact point/normal/distance/force,
+tactile max/mean/RMSE, active overlap, totals, top sensors, and region mapping. Only
+then select 2-3 candidates for Warp.
+
+## Convex decomposition checkpoint: Phases G-I (2026-08-12)
+
+### Completed work
+
+- Reused the already-generated exact N=500 original rigid-flex, single-hull, 11-,
+  24-, 36-, and 87-piece models. No decomposition or model generation was repeated.
+- Added deterministic source-local definitions for the 100k-sample deepest
+  concavity, macro p95 feature, and roughness p95 feature, including source face and
+  outward normal, at `contact_feature_definitions.json`.
+- Added `object_conversion/validate_decomposition_contacts.py`. Isolated fingertip
+  and palm fixtures use the exact 500 hand touch channels. The three local feature
+  fixtures use a temporary validation-only 3 mm mocap sphere/site; it is compiled
+  beside each source XML and deleted immediately, and never alters a production
+  model or its N=500 contract.
+- All fixtures run in CPU MuJoCo 3.3.1 with production gravity, zero initial
+  velocity, identical explicit mass/inertia/contact properties, unrelated collision
+  geoms disabled, 28-step onset bisection, and 0.25 mm response depth. They report
+  first contact position/normal/distance/force, order-independent contact-patch
+  errors, tactile max/mean/RMSE, activation overlap, totals, top sensors, and mapped
+  hand region.
+- Results are evaluated both at the same physical pose (0.25 mm inside original
+  rigid-flex onset) and at equal penetration relative to each representation's own
+  onset. This separates missing/early contact from solver response after contact.
+
+### Contact-onset result
+
+| Fixture | Single hull | 11 pieces | 24 pieces | 36 pieces | 87 pieces |
+|---|---:|---:|---:|---:|---:|
+| Fingertip shift vs flex | -1.451 mm | -1.453 | -1.457 | -1.453 | -1.468 |
+| Palm shift vs flex | -1.250 mm | -1.250 | -1.250 | -1.250 | -1.250 |
+| Deepest concavity shift | +3.171 mm | +0.022 | -0.827 | -0.789 | -0.789 |
+| Macro-feature shift | -1.250 mm | -1.251 | -1.253 | -1.251 | -1.250 |
+| Roughness-feature shift | -1.250 mm | -1.253 | -1.253 | -1.253 | -1.251 |
+
+Positive is premature outward contact and negative is late contact. The single hull
+demonstrates the expected 3.171 mm premature deepest-concavity contact. The 11-piece
+candidate restores that local onset to 0.022 mm and passes every declared gate for
+that fixture. It nevertheless fails the other four fixtures, as do all finer levels.
+
+At the common original-flex pose, every bare decomposition has zero fingertip, palm,
+macro, and roughness contacts/tactile response. Original rigid-flex tactile totals
+are 2.343, 2.057, 4.163, and 4.444 respectively. Equal-penetration results are
+retained separately and show active mapped finger/palm/probe signals, but cannot
+erase the common-pose absence of contact.
+
+### Scientific conclusion and gating decision
+
+This is **Outcome C**. The dominant error is the already documented unmapped rigid-
+flex radius: the original uses a 1.25 mm shell, while the bare convex meshes use the
+extracted surface and zero margin/gap. The palm/macro/roughness onset errors reproduce
+the missing radius almost exactly; the fingertip adds about 0.20 mm local error.
+Increasing decomposition piece count cannot restore a shell absent from every piece.
+
+No candidate passes all five predeclared CPU representation-fidelity gates. Phase I
+therefore selects **zero Warp candidates**. CPU/Warp parity, capacity, GPU physics,
+complete-loop RL, all-24 decomposition, N=500/N=1000 training smokes, production
+default changes, and long multi-seed runs were intentionally not started.
+
+### Artifacts and verification
+
+- `object_conversion/validate_decomposition_contacts.py`
+- `tests/test_decomposition_contact_validation.py`
+- `generated/convex_decomposition_validation/contact_feature_definitions.json`
+- `contact_comparison.csv`, `tactile_comparison.csv`
+- `cpu_contact_tactile_summary.csv`, `.json` validation payload, and `.md` report
+- updated `convex_decomposition_report.md`
+
+The complete focused conversion/decomposition/contact/generation suite passes
+**25/25** in the temporary validation environment. Source compilation and
+`git diff --check` pass. The complete discovery suite in the `ShadowHand` reference
+environment is green across **92 cases** (81 passed, 11 expected opt-in/optional-
+dependency skips); no GPU run was appropriate after the CPU fidelity gate failed.
+
+### Exact next step
+
+Do not proceed to Warp. Evaluate an explicitly radius-aware rigid collision shell
+(preferably a geometric offset that leaves the preserved margin/gap/contact solver
+parameters unchanged), or another native non-convex rigid representation, on the
+same five CPU fixtures. Only a candidate passing these representation-fidelity gates
+may reopen Phase J.

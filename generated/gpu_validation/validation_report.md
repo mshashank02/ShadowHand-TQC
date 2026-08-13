@@ -278,3 +278,70 @@ The durable machine-readable Phase-II summary is
 - Monitor contact/constraint high-water marks over those long randomized runs.
 - Compare candidate ranking stability across multiple rigid mesh objects and tactile layouts.
 - Do not apply rigid-mesh conclusions to deformable or historical rigid-flex runs.
+
+## Convexity / Collision Geometry Audit
+
+The deterministic 100,000-area-sample audit of exactly the 24
+`sphere_study_v1` rigid surfaces classifies the current single-convex-hull
+collision representation as **Outcome C (material)**:
+
+MuJoCo 3.11.0 directly compiled the representative 1,666-vertex/3,328-face OBJ
+with a 989-vertex/1,974-face convex graph at `mesh_graphadr=0`, exactly matching
+the audit hull. The CPU reference environment remains MuJoCo 3.3.1.
+
+- maximum volume inflation: **4.423%**;
+- maximum p95 hull gap: **2.551 mm**;
+- maximum p99 hull gap: **3.420 mm**;
+- absolute sampled maximum gap: **4.459 mm** (4.460 mm at 250k convergence;
+  deterministic vertex maximum 4.459 mm);
+- maximum affected surface above 0.1 mm: **41.47%**;
+- worst object: `obj_size-large_ar-high_macro-high_rough-high`;
+- macro distinction preserved: **yes, but incompletely** — matched hulls retain
+  3.993-8.367 mm p95 separation, while macro-high concavities are systematically
+  bridged;
+- roughness geometrically affected: **yes** — roughness selects distinct meshes,
+  not friction, and convexification removes inward roughness/concavity;
+- full 24-object multi-seed learning validation: **not approved as the next phase**
+  until a targeted collision-representation follow-up preserves the study factors.
+
+The previous manual large/high/high/high hull view was not quantitatively reliable:
+that object is the measured worst case. See the full method, all-object table,
+convergence study, factor analysis, hashes, and four-view heatmaps in
+`generated/convexity_audit/convexity_audit.md`.
+
+## Worst-object convex decomposition follow-up
+
+CoACD 1.0.11 produced a controlled 4/11/24/36/87-piece sweep for
+`obj_size-large_ar-high_macro-high_rough-high`. Robust boolean-union auditing shows
+that 87 pieces meet the provisional geometry gates (0.239/0.478/0.799 mm
+p95/p99/max and 0.324% volume error), while 36 pieces are a close lower-cost option.
+Macro-active p95 error falls from 2.894 mm for one hull to 0.206 mm at 87 pieces;
+roughness-active p95 falls from 2.826 to 0.359 mm.
+
+Geometry success did not translate to CPU representation fidelity. Deterministic
+MuJoCo 3.3.1 N=500 hand and local-probe fixtures measured onset shifts versus the
+original rigid flex:
+
+| Fixture | Single hull | 11 pieces | 24 pieces | 36 pieces | 87 pieces |
+|---|---:|---:|---:|---:|---:|
+| Fingertip | -1.451 mm | -1.453 | -1.457 | -1.453 | -1.468 |
+| Palm | -1.250 mm | -1.250 | -1.250 | -1.250 | -1.250 |
+| Deepest concavity | +3.171 mm | +0.022 | -0.827 | -0.789 | -0.789 |
+| Macro feature | -1.250 mm | -1.251 | -1.253 | -1.251 | -1.250 |
+| Roughness feature | -1.250 mm | -1.253 | -1.253 | -1.253 | -1.251 |
+
+The global late-contact shift identifies the unmapped 1.25 mm rigid-flex radius,
+not a CoACD resolution limit. At a common pose 0.25 mm inside original-flex onset,
+the bare decompositions have no fingertip, palm, macro, or roughness contact and
+zero tactile response; the flex reference totals are 2.343, 2.057, 4.163, and
+4.444. The 11-piece candidate alone passes the deepest-concavity fixture but fails
+the other four.
+
+The result is **Outcome C**: zero candidates are selected for Warp, so backend
+parity, capacity, GPU throughput, complete-loop RL, all-24 generation, and training
+smokes are not run. No production representation/default changed. A radius-aware
+geometric shell or another native non-convex representation must pass the same CPU
+fixtures first. Detailed contact points, normals, distances, forces, tactile errors,
+top sensors, and region mapping are in
+`generated/convex_decomposition_validation/contact_comparison.csv`,
+`tactile_comparison.csv`, and `cpu_contact_tactile_validation.json`.

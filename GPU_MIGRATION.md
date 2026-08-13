@@ -309,6 +309,28 @@ Milestones 1-9 are complete for supported rigid-geom models. See
 Long multi-seed learning/ranking validation remains future experiment execution, not
 an unimplemented training component.
 
+## Convex-decomposition follow-up
+
+The quantitative 24-object audit showed that MuJoCo's single convex hull is not a
+scientifically acceptable collision representation for the rigid study objects. On
+the worst object, fixed-seed CoACD levels produced 4/11/24/36/87 pieces; the 87-piece
+union reached 0.239/0.478/0.799 mm p95/p99/max error and 0.324% volume error.
+
+CPU representation-fidelity tests nevertheless classify the bare decomposition as
+**Outcome C**. Against the original rigid flex, all decompositions contact 1.25 mm
+late on the palm, macro feature, and roughness feature, and about 1.45-1.47 mm late
+at the fingertip. This directly exposes the old flex's 1.25 mm collision radius,
+which an extracted-surface mesh does not encode. The 11-piece result restores the
+deepest-concavity onset to 0.022 mm, while the single hull is 3.171 mm premature,
+but no candidate passes all five CPU contact/tactile fixtures.
+
+Consequently no decomposition candidate proceeds to MJWarp or performance testing,
+no production default changes, and all-24 decomposition remains blocked. The next
+scientific step is a radius-aware geometric collision shell (with unchanged solver
+contact parameters) or another native non-convex rigid representation, first tested
+on the same CPU fixtures. Full evidence is under
+`generated/convex_decomposition_validation/`.
+
 ## References
 
 - [Official MuJoCo Warp repository](https://github.com/google-deepmind/mujoco_warp)
