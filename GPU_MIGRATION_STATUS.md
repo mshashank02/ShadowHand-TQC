@@ -1,13 +1,191 @@
 # GPU Migration Status
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
 
 ## Current phase
 
-Phase II native rigid-mesh collision migration — worst-object bare convex-
-decomposition study complete with CPU representation-fidelity Outcome C; Warp,
-all-24 generation, and long-run validation remain blocked pending a radius-aware
-rigid collision representation
+Phase IV 2D OBJ rigid-flex experiment — CPU Outcome A: exact exterior triangles
+preserve the original 3D rigid-flex boundary/contact contract within all five
+predeclared CPU gates; MuJoCo Warp validation is now authorized but production
+remains flex-rejecting until backend parity and performance gates pass
+
+## Phase IV checkpoint: 2D flex semantics and CPU representation gate
+
+- Recovered the complete Phase I–III investigation state and retained all failed
+  native-mesh, convexity, convex-decomposition, radius-aware, and source-level
+  root-cause history. No trainer, TQC/HER, production collision default, GJK/EPA,
+  mesh decomposition, or study geometry was changed.
+- Verified MuJoCo 3.3.1 and 3.11.0 `mjCFlexcomp::MakeMesh` semantics and MuJoCo
+  Warp 3.11.0 `collision_flex.py`. OBJ faces compile directly to `dim=2`
+  triangular flex elements. `rigid=true` assigns every vertex to the parent object
+  body, preserving one free joint and six rigid-body DOFs. Radius remains the
+  physical thickness of each triangle and the surface is not convexified.
+- Confirmed source-level avoidance of both known 3D paths. The Warp
+  `_flex_tet_internal_collisions_detect` kernel returns for every `dim != 3` flex,
+  while `_flex_narrowphase_tet_detect` is separate from the 2D
+  `_flex_narrowphase_unified` primitive-versus-triangle path.
+- Reused the exact deterministic exterior OBJ without regeneration. Source GMSH
+  SHA-256 is `eaa78c4a15423bf7346f120e1802f0201ee18711834cd703e6a4ef5f98e2b3ef`;
+  OBJ SHA-256 is `e8fd23e33daf4bd61f71ee31d9e3ae8cdf5bd574e411fc608f5e9094def0d70c`.
+  It has 1666 vertices, 3328 triangles, one watertight component, and is compiled
+  with the unchanged 0.03125 scale and 1.25 mm radius.
+- Added `object_conversion/validate_rigid_flex_2d.py`. It derives the full N=500
+  2D model while preserving the object body, pose, explicit mass/COM/inertia,
+  free-joint damping, target/reward contract, inherited contact settings, and all
+  external assets. The compiled 2D flex has 1666 vertices, 4992 edges, 3328
+  elements, `nq=38`, `nv=36`, one object free joint, and all flex vertices on the
+  one object body.
+- The 1/10/100-step contact-free CPU control is exact: zero object contacts and
+  zero position, orientation, linear-velocity, and angular-velocity error at every
+  checkpoint.
+- Reused the exact fingertip, palm, deepest-concavity, macro-feature, and
+  roughness-feature definitions and 28-iteration bisection. Maximum absolute
+  onset error is `0.0000016764 mm`; contact and constraint-row counts match in all
+  common and equal-relative-penetration states; maximum contact-position error is
+  `0.018292 mm`; maximum normal error is below `0.00769 deg`; active tactile
+  Jaccard is 1.0 throughout.
+- Common-pose total tactile relative error is 1.708% fingertip, 7.938% palm,
+  10.239% deepest concavity, 9.577% macro, and 9.971% roughness. These pass the
+  predeclared 25% CPU representation gate; fingertip tactile correlation and
+  cosine similarity both exceed 0.999997. The one-channel local probes have
+  cosine 1.0 and no meaningful correlation statistic.
+- CPU classification is **Outcome A — strong representation fidelity**. All
+  primary onset/contact/tactile fixture gates pass, so the task's CPU hard gate
+  authorizes the controlled MuJoCo Warp phases. This does not yet authorize N=1000,
+  benchmarks, production integration, or RL.
+
+Commands: `/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m
+object_conversion.validate_rigid_flex_2d`; source inspection used the installed
+MuJoCo 3.3.1/3.11.0 and MuJoCo Warp 3.11.0 trees. Durable artifacts are under
+`generated/rigid_flex_2d_validation/`.
+
+Exact next action: run the identical 2D MJCF through the 20 mm CPU/Warp
+zero-contact control, then quasi-static onset, 0.5/2 mm contact, and the exact five
+fixtures. Do not run N=1000 or performance work before N=500 parity passes.
+
+## Phase III completed conclusion
+
+Outcome E: MuJoCo Warp 3.11 first diverges by generating forbidden
+tetrahedral-internal contacts, and its separate geom-flex triangle-face
+narrowphase does not reproduce CPU's radius-inflated tetrahedron GJK/EPA manifold;
+production remains flex-rejecting.
+
+## Phase III checkpoint: exact-model source and transfer localization
+
+- Preserved the existing radius-aware worktree and reread the migration/status,
+  validation, convexity, decomposition, CPU contact/tactile, and radius-semantics
+  artifacts before starting this investigation.
+- Locked the version matrix to CPU MuJoCo 3.3.1, CPU MuJoCo 3.11.0, and MuJoCo
+  Warp 3.11.0 with Warp 1.16.0 on CUDA.
+- Recompiled the unchanged N=500 `flexcomp type="gmsh" dim="3" rigid="true"`
+  model. It has 2387 vertices, 12602 edges, 8552 tetrahedra, a 1.25 mm radius,
+  and one single-body rigid flex with `internal=false` and `selfcollide=none`.
+- Verified CPU-to-Warp transfer preserves topology, radius, collision masks,
+  `flex_internal=0`, and `flex_selfcollide=0`; Warp also derives
+  `has_flex_selfcollide=False`.
+- Compared the CPU 3.3.1 and 3.11.0 collision driver with MuJoCo Warp 3.11.0.
+  Both CPU versions skip internal and self collision for `flex_rigid`, then gate
+  the two paths by their respective flags. Warp instead launches
+  `_flex_tet_internal_collisions_detect` whenever `nflexelem > 0`; that kernel
+  receives neither `flex_rigid` nor `flex_internal` and therefore cannot honor
+  either exclusion.
+- This source path produces flex-only contact identifiers (`geom=-1`, same flex on
+  both sides), matching the already measured 2674 false Warp contacts in the
+  separated no-contact fixture. Compilation, transfer, radius omission, collision
+  masks, CPU-version drift, trainer logic, and native-geom collision have been
+  ruled out as the first divergence.
+
+Exact next task: attribute the false-contact count to the tetrahedral kernel at
+runtime, preserve real sphere-shell contacts under an isolated guard, and capture
+the three-backend minimal reproduction.
+
+## Phase III checkpoint: minimal reproducer and kernel counterfactual
+
+- Added a focused diagnostic module/CLI and generated a minimal model containing
+  only the exact original binary Gmsh asset, its unchanged rigid 3-D flex settings,
+  and one position-controlled sphere probe. The compiled minimal model preserves
+  all flex topology hashes and counts from the full N=500 model.
+- Ran separated, approach, onset, shallow/deep penetration, and bidirectional
+  sliding states in CPU MuJoCo 3.3.1, CPU MuJoCo 3.11.0, stock MuJoCo Warp 3.11.0,
+  and an experimental Warp run that replaces only
+  `_flex_tet_internal_collisions_detect` with a validated no-op.
+- CPU 3.3.1 and 3.11.0 produce identical contact counts and distances in every
+  state: zero for separated/approach/onset, three for shallow penetration, 13 for
+  deep penetration, and four/seven for the two sliding states.
+- Stock Warp adds exactly 2674 flex-internal contacts in every state, including the
+  20 mm separated control. These contacts alone create 2674 constraint rows before
+  any probe contact exists. Their distances range from about -0.001559 m to
+  -2.81e-7 m.
+- The one-kernel guard removes exactly those 2674 contacts and restores zero
+  contacts/constraints in all separated states. It preserves real geom-flex
+  collision: shallow penetration has three contacts on both CPU versions and
+  guarded Warp, with minimum contact distance differing by about 1.1e-9 m.
+- Guarded Warp still differs in manifold multiplicity for deeper/sliding states
+  (10 versus 13 deep contacts and 3/2 versus 4/7 sliding contacts). That is a
+  second narrowphase/manifold discrepancy and is the material remaining tactile
+  failure after the earlier false-contact bug is removed.
+
+First proven divergence: MuJoCo Warp 3.11 collision candidate generation launches
+an intra-tetrahedron face/opposite-vertex test for a rigid flex that CPU MuJoCo
+excludes. Constraints and tactile dynamics only amplify these already-invalid
+contacts.
+
+Exact next task: quantify the guard on the full N=500 settled tactile fixture,
+inspect upstream history for this localized launch, and package the reproducer.
+
+## Phase III checkpoint: full-model attribution, upstream status, and conclusion
+
+- Inspected CPU `engine_collision_driver.c` and `engine_collision_convex.c` in
+  MuJoCo 3.3.1 and 3.11.0, plus MuJoCo Warp 3.11 `io.py`, `smooth.py`,
+  `collision_driver.py`, `collision_flex.py`, constraint, support, and sensor paths.
+  CPU sends an active tetrahedron as one flex CCD object through `mjc_flexSupport`
+  and GJK/EPA. Warp loops over all four triangle faces of every tetrahedron, uses
+  analytic geom-triangle collision, and deduplicates positions within 1 mm; the
+  source marks the missing tetrahedral geom-flex broadphase as a TODO.
+- Refined the approach curve to +20/+2/+0.5/+0.1/0/-0.1/-0.25/-0.5/-1/-2 mm.
+  CPU 3.3.1, CPU 3.11.0, and guarded Warp first contact at -0.1 mm with one
+  contact/four rows. CPU-versus-guarded-Warp distance error is 7.1e-11 m. At
+  -0.5 mm all have three contacts/12 rows and CPU 3.11 versus Warp touch differs
+  by 2.12e-6. At -2 mm CPU has 13 contacts/52 rows and Warp has 10/40; touch
+  differs by 0.777116.
+- Ran the experimental guard on the full settled N=500 hand state. Imported data
+  has 89 matched contacts, position error below 3e-8 m, touch max error 4.08e-6,
+  and correlation 1.0. After one step CPU has 89 contacts and guarded Warp has 83;
+  qpos/qvel/touch maximum errors remain 0.001607/0.803615/74.3498. Touch RMSE is
+  6.85656, correlation 0.830962, active Jaccard 0.9, and total-magnitude relative
+  error 74.801%. The guard changes the stock Warp contact count from 2757 to 83
+  but does not make the external contact manifold scientifically equivalent.
+- Searched upstream only after localization. The installed/tagged v3.11.0 commit
+  is `dbc52e3`; commit `c822833` (`flex-flex collisions`, PR #1496, 2026-08-07)
+  removes the exact internal kernel in a broader rewrite. Current main `70c4571`
+  no longer produces false separated contacts, but measured shallow/deep counts
+  are 4/16 versus CPU 3/13, so the rewrite is not complete CPU parity.
+- Added the exact-asset reproducer, a minimal v3.11 internal-flag patch illustration,
+  version/topology/world-position/no-contact/approach/contact/support/constraint/
+  force/tactile artifacts, full N=500 statistics, an SVG figure, and the durable
+  root-cause report under `generated/rigid_flex_cpu_warp_debug/` and
+  `reproducers/rigid_flex_warp/`.
+- Focused CPU-safe root-cause tests pass 8/8; the complete CPU reference suite
+  passes 94 tests with 11 expected skips. `git diff --check` is clean. The
+  experimental guard is confined to diagnostics, validates a single-body rigid
+  3-D flex with both collision flags disabled, and is not reachable from the
+  production backend.
+
+Commands used include `debug_rigid_flex_cpu_warp.py prepare|cpu|warp`,
+`diagnose_rigid_flex.py --fixture settled_contact --experimental-tet-guard`, and
+`report_rigid_flex_root_cause.py`. Exact raw invocations and all output matrices
+are represented by the CLI metadata and artifacts.
+
+Conclusion: model compilation, topology, radius transfer, and world positions
+match. The first divergence is forbidden Warp tetrahedron-internal candidate
+generation. The substantial tactile discrepancy remains because Warp's external
+3-D geom-flex narrowphase/manifold algorithm is not CPU MuJoCo's full inflated-
+tetrahedron support/GJK/EPA algorithm. Touch aggregation agrees closely when the
+manifold agrees and is not the root cause.
+
+Exact next action: keep production flex rejection; validate a future upstream
+release only after it resolves the `nJfe=0` edge write and passes this exact
+no-contact, approach, manifold, force, and full N=500 tactile suite.
 
 ## Phase II checkpoint: pre-implementation audit
 
@@ -1121,3 +1299,192 @@ Do not proceed to Warp. Evaluate an explicitly radius-aware rigid collision shel
 parameters unchanged), or another native non-convex rigid representation, on the
 same five CPU fixtures. Only a candidate passing these representation-fidelity gates
 may reopen Phase J.
+
+## Radius-aware shell checkpoint: Phases A-D (2026-08-13)
+
+### Completed phase
+
+- Phase A: verified the exact MuJoCo 3.3.1 rigid-flex radius semantics from the
+  tagged CPU engine source and the compiled reference model.
+- Phase B: verified the repository's size-scaled radius rule for all 24 study
+  objects: 0.75 mm small, 1.0 mm medium, and 1.25 mm large.
+- Phase C: implemented separate margin-control and true convex Minkowski-shell
+  model builders. Hybrid geometry plus residual margin is available but is not
+  authorized unless the two primary strategies leave a measured residual.
+- Phase D: added deterministic shell, convexity, radius-rule, and model-preservation
+  tests. A generated 11-piece margin candidate compiles in CPU MuJoCo 3.3.1 with
+  `nflex=0`, 59 geoms, 24 meshes, and all 529 compiled sensors.
+
+### Exact commands
+
+```text
+pytest -q tests/test_radius_aware_collision.py tests/test_decomposition_contact_validation.py tests/test_rigid_mesh_generation.py
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m object_conversion.radius_aware_collision --models-manifest generated/convex_decomposition_validation/contact_models/models.json --output-dir /tmp/radius-aware-compile-check --levels coarse --strategy margin --shell-mm 1.25
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -c "import mujoco; m=mujoco.MjModel.from_xml_path('/tmp/radius-aware-compile-check/coarse_margin_1250um.xml'); print(mujoco.__version__,m.nflex,m.ngeom,m.nmesh,m.nsensor)"
+```
+
+The focused suite passes 12/12. The compile check reports
+`3.3.1 0 59 24 529`.
+
+### Files changed
+
+- `object_conversion/radius_aware_collision.py`
+- `object_conversion/validate_radius_aware_contacts.py`
+- `tests/test_radius_aware_collision.py`
+- `generated/convex_decomposition_validation/radius_semantics.md`
+- `generated/convex_decomposition_validation/rigid_flex_radius_rule.csv`
+- this status file
+
+### Flex-radius finding and shell strategy
+
+The flex support function adds `flex_radius + margin/2` in the normalized support
+direction, so the active tetrahedron is `K + B(radius)`. A geom margin is retained
+only as a diagnostic onset control because it splits pair inflation and is not
+contact-point or tactile equivalent. The geometric candidate sums every convex
+piece with a deterministic 162-direction sphere polytope, circumscribed to avoid
+under-filling the true ball, then validates the resulting watertight convex hull.
+Visual geometry, the one-body/one-free-joint structure, inertia, piece count, and
+all non-margin contact parameters remain unchanged.
+
+### Parameters and results so far
+
+No five-fixture parameter result is claimed at this checkpoint. The intended first
+sweep is 0.75, 1.0, 1.1, 1.2, 1.25, 1.3, 1.4, and 1.5 mm on the cached 11-, 36-,
+and 87-piece levels. Primary onset tolerance is 0.10 mm; 0.25 mm remains a
+secondary diagnostic. Tactile, duplicate-contact, CPU/Warp, and GPU benchmark
+results are pending.
+
+### Failures and exact next action
+
+No implementation or compile failure is open. Run the margin diagnostic sweep on
+all five CPU fixtures, then run the geometric-shell sweep (and only a targeted
+hybrid residual if the measured data justify it). Do not run Warp unless one
+candidate passes every CPU onset, contact, tactile, and duplicate-contact gate.
+
+## Radius-aware shell checkpoint: Phases E-S (2026-08-13)
+
+### Completed phases and selection
+
+- Phases E-I: evaluated 61 unique margin-control and geometric Minkowski-shell
+  candidates on the cached 11-, 36-, and 87-piece worst-object models using all
+  five CPU fixtures, both common-physical-pose and equal-relative-penetration
+  states, and explicit duplicate-contact diagnostics.
+- Phase J: selected zero CPU-passing candidates. Classification is **Outcome C**.
+- Phases K-O were not run because the mandatory CPU gate failed: no CPU/Warp
+  parity, capacity, GPU physics, complete-loop RL, or production representation.
+- Phases P-R were consequently not run: no all-24 conversion, factor-preservation
+  approval, or N=500/N=1000 GPU training smoke.
+- Phase S: consolidated durable reports/CSVs/JSON, tests, and migration docs. TQC,
+  HER, replay, normalization, and production collision defaults remain unchanged.
+
+### Exact CPU commands
+
+```text
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m object_conversion.validate_radius_aware_contacts --strategy margin --shell-mm 0.75 1.0 1.1 1.2 1.25 1.3 1.4 1.5 --levels coarse fine very_fine --output generated/convex_decomposition_validation/radius_aware/margin_sweep
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m object_conversion.validate_radius_aware_contacts --strategy minkowski --shell-mm 0.75 1.0 1.1 1.2 1.25 1.3 1.4 1.5 --levels coarse fine very_fine --sphere-subdivisions 2 --sphere-bound circumscribed --output generated/convex_decomposition_validation/radius_aware/minkowski_sweep
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m object_conversion.validate_radius_aware_contacts --strategy minkowski --shell-mm 1.00 1.01 1.02 1.03 1.04 --levels fine very_fine --sphere-subdivisions 2 --sphere-bound circumscribed --output generated/convex_decomposition_validation/radius_aware/minkowski_refinement
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m object_conversion.validate_radius_aware_contacts --strategy minkowski --shell-mm 1.012 1.014 --levels fine --sphere-subdivisions 2 --sphere-bound circumscribed --output generated/convex_decomposition_validation/radius_aware/minkowski_minimax
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m object_conversion.validate_radius_aware_contacts --strategy margin --shell-mm 1.25 --gap-mm {0.10,0.25,0.50} --levels fine --output generated/convex_decomposition_validation/radius_aware/margin_gap_{0100,0250,0500}um
+python -m object_conversion.report_radius_aware_validation --input <seven sweep JSON files> --output generated/convex_decomposition_validation
+/tmp/shadowhand-mjw.7EqKBl/bin/python -m object_conversion.audit_radius_aware_geometry --reference-model generated/convex_decomposition_validation/contact_models/collision_fine_500_1.071429_0.714286/manipulate_collision_fine_touch_sensors_500_1.071429_0.714286.xml --candidate-manifest <11-piece-1.25 manifest> --candidate-manifest <36-piece-1.25 manifest> --candidate-manifest <87-piece-1.25 manifest> --candidate-manifest <36-piece-1.012 manifest> --output generated/convex_decomposition_validation --target-radius-mm 1.25 --samples 100000 --target-sphere-subdivisions 3
+/home/mshashank02/anaconda3/envs/ShadowHand/bin/python -m pytest -q
+```
+
+The brace notation summarizes three separately executed gap commands; the exact
+expanded commands and outputs are retained in the three named directories.
+
+### Parameters tested and onset results
+
+The fixed shell grid was 0.75/1.0/1.1/1.2/1.25/1.3/1.4/1.5 mm. The physical
+1.25 mm 36-piece geometric shell gives onset shifts (candidate minus flex) of:
+
+| Fingertip | Palm | Deep concavity | Macro | Roughness | Worst |
+|---:|---:|---:|---:|---:|---:|
+| +0.0284 mm | +0.0226 | +0.4999 | +0.0136 | +0.0064 | 0.4999 |
+
+The narrow minimax refinement selects the 36-piece 1.012 mm geometric shell, but
+it still gives -0.2536/-0.2197/+0.2545/-0.2273/-0.2335 mm across the same fixture
+order. Its 0.2545 mm worst error fails the secondary 0.25 mm diagnostic and the
+primary 0.10 mm gate. The 87-piece level is slightly worse at the fingertip. The
+11-piece level already overfills the deepest concavity without a shell, so adding
+the physical radius makes that local contact 1.294 mm premature.
+
+At 1.25 mm margin, 0.10/0.25/0.50 mm gaps leave detected first-contact onset
+unchanged. They reduce or eliminate active constraint force and tactile response,
+so none improves fidelity. A hybrid uniform residual was not run because it adds
+the same support offset to the same piece union and cannot reconcile the opposing
+concavity/exterior errors. Piece-specific radii were rejected as a nonphysical fit
+that would violate the one size-defined radius rule.
+
+### Contact, force, tactile, and duplicate results
+
+For the minimax 1.012 mm candidate, equal-penetration contact position errors are
+0.005-0.506 mm and normal errors are at most 8.80 degrees, within their gates.
+Nevertheless, common-pose tactile-total relative errors are 46.7% concavity, 100%
+fingertip, 49.2% palm, 34.9% macro, and 47.0% roughness, all above the 25% gate.
+Equal-penetration force/tactile relative errors remain about 31.6% concavity, 0.8%
+fingertip force but 62.5% fingertip tactile total, 38.7% palm, 46.6% macro, and
+57.8% roughness. The rigid candidates frequently produce one piece contact where
+the flex reference produces six or ten element contacts.
+
+No evaluated candidate/state contains a near-coincident duplicate-contact pair
+under the declared 0.1 mm position / 5-degree normal diagnostic (maximum zero over
+610 candidate-fixture states). Duplicate shell contacts are therefore not the
+failure mode; onset inconsistency, flex/piece patch multiplicity, forces, and
+tactile totals are.
+
+### Shell union geometry
+
+The established Manifold3D/Trimesh/Rtree pipeline constructed an independent target
+by Minkowski-summing the original 1,666-vertex/3,328-face non-convex surface with a
+642-direction circumscribed 1.25 mm sphere polytope (maximum radial approximation
+excess 5.69 micrometres). Exact candidate-piece boolean unions were compared at
+100,000 deterministic target-surface samples:
+
+| Candidate | Volume error | p95 mm | p99 mm | max mm | overfill fraction | underfill fraction |
+|---|---:|---:|---:|---:|---:|---:|
+| 11-piece, 1.25 mm | +0.927% | 0.550 | 0.880 | 1.504 | 96.48% | 3.52% |
+| 36-piece, 1.25 mm | +0.504% | 0.325 | 0.552 | 0.816 | 97.46% | 2.54% |
+| 87-piece, 1.25 mm | +0.397% | 0.246 | 0.493 | 0.816 | 98.07% | 1.93% |
+| 36-piece, 1.012 mm | -1.571% | 0.239 | 0.312 | 0.576 | 7.71% | 92.29% |
+
+The physical 87-piece shell retains 12.56% of target surface above 0.10 mm error
+(4.87% above 0.25 mm), while the contact-minimax radius globally underfills the
+physical target. These measurements are in `radius_aware_shell_geometry.csv/.json`.
+
+### CPU-to-Warp and GPU results
+
+There are no CPU-passing candidates, so CPU/Warp parity, contact/constraint
+capacity, GPU physics throughput, complete-loop throughput, and learning were
+**NOT RUN**. The three required CSV ledgers record `NOT_RUN_CPU_GATE_FAILED` rather
+than fabricating empty benchmark results.
+
+### Files changed and durable artifacts
+
+- implementation: `object_conversion/radius_aware_collision.py`,
+  `validate_radius_aware_contacts.py`, `report_radius_aware_validation.py`
+- tests: `tests/test_radius_aware_collision.py` and the extended contact validator test
+- semantics/rule: `radius_semantics.md`, `rigid_flex_radius_rule.csv`
+- required results: `radius_aware_parameter_sweep.csv/.json`,
+  `radius_aware_contact_comparison.csv`, `radius_aware_tactile_comparison.csv`,
+  `duplicate_contact_analysis.csv`, `radius_aware_report.md`
+- shell geometry: `radius_aware_shell_geometry.csv/.json`
+- gated ledgers: `cpu_warp_radius_aware_parity.csv`,
+  `radius_aware_gpu_benchmark.csv`, `radius_aware_complete_loop_benchmark.csv`
+- exact generated XML/assets/manifests and per-sweep raw JSON under
+  `generated/convex_decomposition_validation/radius_aware/`
+- updated `GPU_MIGRATION.md`, `GPU_MIGRATION_STATUS.md`, and
+  `generated/gpu_validation/validation_report.md`
+
+The focused suite passes 14/14 in both the local and CPU reference environments.
+The complete CPU reference suite passes **87 tests with 11 expected skips**.
+`git diff --check` passes.
+
+### Failures and exact next action
+
+The physical shell cannot correct decomposition-local under/overfill consistently,
+and matching onset does not reproduce flex contact-patch/tactile behavior. Do not
+proceed with this convex-piece shell in Warp. Investigate a different native
+non-convex rigid representation that preserves the original source boundary before
+applying the 0.75/1.0/1.25 mm size-scaled collision shell, then rerun the same CPU
+gates before any GPU work.

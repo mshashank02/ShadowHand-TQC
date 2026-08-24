@@ -154,6 +154,20 @@ def compare_tactile(
     intersection = reference_active & actual_active
     reference_total = float(np.sum(np.abs(reference_values)))
     actual_total = float(np.sum(np.abs(actual_values)))
+    reference_norm = float(np.linalg.norm(reference_values))
+    actual_norm = float(np.linalg.norm(actual_values))
+    cosine_similarity = (
+        float(np.dot(reference_values, actual_values) / (reference_norm * actual_norm))
+        if reference_norm and actual_norm
+        else (1.0 if reference_norm == actual_norm else None)
+    )
+    reference_std = float(np.std(reference_values))
+    actual_std = float(np.std(actual_values))
+    correlation = (
+        float(np.corrcoef(reference_values, actual_values)[0, 1])
+        if reference_values.size > 1 and reference_std and actual_std
+        else None
+    )
     nonzero = np.flatnonzero(absolute_error > 0.0)
     order = nonzero[np.argsort(-absolute_error[nonzero], kind="stable")[: min(10, nonzero.size)]]
     return {
@@ -167,6 +181,8 @@ def compare_tactile(
         "active_jaccard": float(len(intersection) / len(union)) if union else 1.0,
         "reference_total_magnitude": reference_total,
         "actual_total_magnitude": actual_total,
+        "cosine_similarity": cosine_similarity,
+        "correlation": correlation,
         "total_magnitude_relative_error": (
             abs(actual_total - reference_total) / reference_total
             if reference_total
@@ -219,6 +235,7 @@ def _contact_records(
                 "distance_m": float(contact.dist),
                 "force_contact_frame": force.copy().tolist(),
                 "normal_force": float(abs(force[0])),
+                "constraint_rows": int(contact.dim),
             }
         )
     return records
@@ -270,6 +287,12 @@ def compare_contacts(reference: list[dict[str, Any]], actual: list[dict[str, Any
     return {
         "reference_count": len(reference),
         "actual_count": len(actual),
+        "reference_constraint_rows": int(
+            sum(contact.get("constraint_rows", 0) for contact in reference)
+        ),
+        "actual_constraint_rows": int(
+            sum(contact.get("constraint_rows", 0) for contact in actual)
+        ),
         "contact_presence_matches": bool(reference) == bool(actual),
         "paired_count": len(pairs),
         "position_error_mm_max": float(max(position_errors, default=0.0) * 1000.0),

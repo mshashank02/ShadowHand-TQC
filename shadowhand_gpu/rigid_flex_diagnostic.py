@@ -11,7 +11,7 @@ baseline.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterator
@@ -287,6 +287,7 @@ def compare_rigid_flex_fixture(
     *,
     contacts_per_world: int = 8192,
     constraints_per_world: int = 4096,
+    experimental_tet_guard: bool = False,
 ) -> dict[str, Any]:
     """Compare one controlled old rigid-flex rollout and retain divergence evidence."""
     import mujoco
@@ -306,7 +307,14 @@ def compare_rigid_flex_fixture(
     first_divergence_step: int | None = None
     retained: dict[str, Any] = {}
 
-    with wp.ScopedDevice("cuda:0"), rigid_flex_edge_workaround(model):
+    if experimental_tet_guard:
+        from .rigid_flex_root_cause import rigid_tet_internal_guard
+
+        collision_guard = rigid_tet_internal_guard(model)
+    else:
+        collision_guard = nullcontext()
+
+    with wp.ScopedDevice("cuda:0"), rigid_flex_edge_workaround(model), collision_guard:
         warp_model = mjw.put_model(model)
         warp_data = mjw.put_data(
             model,
@@ -364,6 +372,7 @@ def compare_rigid_flex_fixture(
             "production_backend_changed": False,
             "invariant": "rigid-body edge length; zero relative edge velocity",
         },
+        "experimental_tet_internal_guard": experimental_tet_guard,
         "initial_cpu_contact_count": initial_cpu_contact_count,
         "first_cpu_contact_step": first_cpu_contact_step,
         "first_warp_contact_step": first_warp_contact_step,
@@ -378,8 +387,16 @@ def compare_rigid_flex_fixture(
     }
 
 
-def compare_all_rigid_flex_fixtures(xml_path: str | Path) -> dict[str, Any]:
+def compare_all_rigid_flex_fixtures(
+    xml_path: str | Path,
+    *,
+    experimental_tet_guard: bool = False,
+) -> dict[str, Any]:
     return {
-        fixture.name: compare_rigid_flex_fixture(xml_path, fixture)
+        fixture.name: compare_rigid_flex_fixture(
+            xml_path,
+            fixture,
+            experimental_tet_guard=experimental_tet_guard,
+        )
         for fixture in RIGID_FLEX_FIXTURES
     }

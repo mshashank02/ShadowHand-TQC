@@ -1,0 +1,24 @@
+diff --git a/mujoco_warp/_src/collision_flex.py b/mujoco_warp/_src/collision_flex.py
+--- a/mujoco_warp/_src/collision_flex.py
++++ b/mujoco_warp/_src/collision_flex.py
+@@
+ def _flex_tet_internal_collisions_detect(
+   # Model:
+   nflex: int,
++  flex_internal: wp.array[int],
+   flex_dim: wp.array[int],
+@@
+   flexid = flex_elemflexid[elemid]
++  if flex_internal[flexid] == 0:
++    return
+   if flex_dim[flexid] != 3:
+     return
+@@
+       inputs=[
+         m.nflex,
++        m.flex_internal,
+         m.flex_dim,
+
+# This is the minimal v3.11.0 correction for the reproduced internal=false case.
+# Full CPU parity also requires excluding rigid flexes even if internal is requested,
+# and replacing the non-equivalent external geom-flex narrowphase/manifold path.

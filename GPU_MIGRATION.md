@@ -331,6 +331,86 @@ contact parameters) or another native non-convex rigid representation, first tes
 on the same CPU fixtures. Full evidence is under
 `generated/convex_decomposition_validation/`.
 
+### Radius-aware shell result
+
+The follow-up verified from MuJoCo 3.3.1 source that a rigid flex tetrahedron uses
+the support shape `K + B(radius)`, with the flex radius distinct from pair margin.
+The 24 study objects use a size-scaled radius: 0.75 mm small, 1.0 mm medium, and
+1.25 mm large. Two native rigid candidates were tested on the fixed worst-object
+fixtures: MuJoCo margin/gap as a diagnostic control, and deterministic convex-piece
+Minkowski expansion using a circumscribed 162-direction sphere polytope.
+
+This follow-up is also **Outcome C**. Across 61 unique CPU candidates, no single
+shell parameter passes onset, contact, and tactile gates. The physical 1.25 mm
+geometric shell restores the four exterior fixture onsets to within 0.029 mm, but
+makes the deepest concavity about 0.500 mm premature. The minimax 36-piece shell is
+1.012 mm and still has 0.2545 mm worst onset error, just outside the secondary
+0.25 mm diagnostic and far outside the 0.10 mm primary gate. Common-pose tactile
+total errors remain 34.9%-100%. Margin gaps reduce forces/tactile without changing
+detection onset and do not help. No near-coincident duplicate pair was observed,
+but flex-to-piece contact multiplicity still differs substantially.
+
+The 100k-sample exact-union audit independently Minkowski-summed the original
+non-convex surface with a higher-resolution 642-direction 1.25 mm target sphere.
+The physical 87-piece shell has 0.397% volume overfill and 0.246/0.493/0.816 mm
+p95/p99/max boundary error. The 1.012 mm minimax contact fit instead has 1.571%
+volume underfill; 92.29% of target-surface samples are outside its union.
+
+There are zero Warp candidates. CPU/Warp, GPU benchmarks, complete-loop RL,
+production selection, all-24 processing, and N=500/N=1000 GPU smokes were not run.
+The next step is a different native non-convex rigid representation that preserves
+the original surface before applying its size-scaled shell. See
+`generated/convex_decomposition_validation/radius_aware_report.md` and the
+`radius_aware_*` CSV/JSON artifacts.
+
+## Original rigid-flex CPU/Warp root cause
+
+The follow-on investigation returned to the exact original large/high/high/high
+N=500 `flexcomp type="gmsh" dim="3" rigid="true" radius="0.00125"` model. A
+minimal sphere fixture copies that exact binary Gmsh source and retains its 2387
+vertices, 12602 edges, 8552 tetrahedra, 3328 shell triangles, radius, and contact
+parameters. CPU MuJoCo 3.3.1, CPU MuJoCo 3.11.0, and MuJoCo Warp 3.11.0 have
+identical compiled topology hashes. Warp's world vertices differ by at most
+1.86e-9 m, and radius transfer differs only by float32 rounding.
+
+The first concrete divergence is collision candidate generation. In a 20 mm
+separated state both CPU versions produce zero contacts. Stock Warp produces 2674
+contacts with `geom=(-1,-1)` and `flex=(0,0)`, plus 2674 constraint rows. Warp
+3.11 launches `_flex_tet_internal_collisions_detect` whenever any flex element
+exists. The kernel receives neither `flex_internal` nor `flex_rigid`, so it tests
+each tetrahedron's opposite vertex against its own radius-inflated faces despite
+the model's `internal=false` and `selfcollide=none`. Both CPU collision drivers
+exclude rigid flexes from this path and separately honor the internal flag.
+
+A diagnostic-only replacement of that exact kernel with a no-op removes exactly
+2674 contacts in every probe state and restores separated-state parity. It does
+not suppress real contacts: at 0.1 mm penetration CPU 3.11 and guarded Warp both
+produce one contact/four constraint rows with 7.1e-11 m distance error; at 0.5 mm
+both produce three contacts/12 rows and touch differs by 2.12e-6.
+
+This guard is not a complete fix. CPU collides each active 3-D element as a single
+radius-inflated tetrahedron through its flex support function and GJK/EPA. Warp
+3.11 tests all four radius-inflated triangle faces of every tetrahedron against the
+geom and deduplicates positions within 1 mm; that source path has no tetrahedral
+broadphase. At 2 mm penetration CPU produces 13 contacts/52 rows and guarded Warp
+10/40. In the full settled N=500 model, the guard changes Warp's contact count from
+2757 to 83, but CPU has 89 and the one-step qpos/qvel/touch errors remain
+0.001607/0.803615/74.3498. Touch RMSE is 6.85656, correlation 0.830962, active
+Jaccard 0.9, and total tactile error 74.801%. Imported matched contacts and tactile
+data agree near float precision before collision is recomputed, and the minimal
+matched-manifold touch case agrees closely; downstream touch aggregation is not
+the first failure.
+
+Upstream tag v3.11.0 contains the defective internal kernel. Commit `c822833`
+(`flex-flex collisions`, PR #1496, 2026-08-07) removes it in a broader rewrite;
+current main `70c4571` fixes the separated-state symptom but still yields different
+deeper external manifolds. The result is Outcome E: an upstream false-internal-
+contact bug plus a non-equivalent geom-flex narrowphase/manifold implementation.
+Production continues to reject flex, and the existing separate `nJfe=0` rigid-edge
+write must also be resolved before reconsidering original rigid-flex execution.
+Durable evidence is in `generated/rigid_flex_cpu_warp_debug/` and the packaged
+reproducer is in `reproducers/rigid_flex_warp/`.
+
 ## References
 
 - [Official MuJoCo Warp repository](https://github.com/google-deepmind/mujoco_warp)

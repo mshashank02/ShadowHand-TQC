@@ -7,6 +7,7 @@ from object_conversion.validate_decomposition_contacts import (
     compare_contacts,
     compare_tactile,
 )
+from object_conversion.validate_radius_aware_contacts import _duplicate_diagnostics
 
 
 class DecompositionContactValidationTests(unittest.TestCase):
@@ -68,6 +69,29 @@ class DecompositionContactValidationTests(unittest.TestCase):
         self.assertEqual(metrics["active_intersection"], 1)
         self.assertEqual(metrics["active_union"], 2)
         self.assertEqual(metrics["top_error_sensors"][0]["region"], "fftip")
+
+    def test_duplicate_contact_diagnostic_is_deterministic(self):
+        contacts = [
+            {
+                "geom_names": ["probe", "object_collision_002"],
+                "position_m": [0.0, 0.0, 0.0],
+                "normal": [1.0, 0.0, 0.0],
+            },
+            {
+                "geom_names": ["probe", "object_collision_003"],
+                "position_m": [0.00005, 0.0, 0.0],
+                "normal": [-1.0, 0.0, 0.0],
+            },
+            {
+                "geom_names": ["probe", "object_collision_004"],
+                "position_m": [0.001, 0.0, 0.0],
+                "normal": [1.0, 0.0, 0.0],
+            },
+        ]
+        expected = _duplicate_diagnostics(contacts)
+        self.assertEqual(expected, _duplicate_diagnostics(contacts))
+        self.assertEqual(expected["object_piece_count"], 3)
+        self.assertEqual(expected["near_duplicate_contact_pairs_0p1mm_5deg"], 1)
 
 
 if __name__ == "__main__":
