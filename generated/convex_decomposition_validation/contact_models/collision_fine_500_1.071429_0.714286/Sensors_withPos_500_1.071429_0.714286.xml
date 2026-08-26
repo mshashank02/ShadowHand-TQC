@@ -1,0 +1,660 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco>
+    <body name="robot0:hand mount" pos="1 1.25 0.15" euler="1.5708 0 3.14159">
+        <inertial mass="0.1" pos="0 0 0" diaginertia="0.001 0.001 0.001" />
+        <body childclass="robot0:asset_class" name="robot0:forearm" pos="0 0.01 0" euler="0 0 0">
+            <inertial pos="0.001 -0.002 0.29" quat="0.982 -0.016 0 -0.188" mass="4" diaginertia="0.01 0.01 0.0075" />
+            <geom class="robot0:D_Vizual" pos="0 0.01 0.04" name="robot0:V_forearm" mesh="robot0:forearm" euler="0 0 1.57" />
+            <geom class="robot0:DC_Hand" name="robot0:C_forearm" type="mesh" mesh="robot0:forearm_cvx" pos="0 0.01 0.04" euler="0 0 1.57" rgba="0.4 0.5 0.6 0.7" />
+            <body name="robot0:wrist" pos="0 0 0.256">
+                <inertial pos="0.003 0 0.016" quat="0.504 0.496 0.495 0.504" mass="0.3" diaginertia="0.001 0.001 0.001" />
+                <joint name="robot0:WRJ1" type="hinge" pos="0 0 0" axis="0 1 0" range="-0.489 0.14" damping="0.5" armature="0.005" user="1123" />
+                <geom class="robot0:D_Vizual" name="robot0:V_wrist" mesh="robot0:wrist" />
+                <geom class="robot0:DC_Hand" name="robot0:C_wrist" type="capsule" pos="0 0 0" quat="0.707 0.707 0 0" size="0.015 0.01" rgba="0.4 0.5 0.6 0.1" />
+                <body name="robot0:palm" pos="0 0 0.034">
+                    <inertial pos="0.006 0 0.036" quat="0.716 0.044 0.075 0.693" mass="0.3" diaginertia="0.001 0.001 0.001" />
+                    <joint name="robot0:WRJ0" type="hinge" pos="0 0 0" axis="1 0 0" range="-0.698 0.489" damping="0.5" armature="0.005" user="1122" />
+                    <geom class="robot0:D_Vizual" name="robot0:V_palm" mesh="robot0:palm" />
+                    <geom class="robot0:DC_Hand" name="robot0:C_palm0" type="box" pos="0.011 0 0.038" size="0.032 0.0111 0.049" rgba="0.4 0.5 0.6 0.1" />
+                    <geom class="robot0:DC_Hand" name="robot0:C_palm1" type="box" pos="-0.032 0 0.014" size="0.011 0.0111 0.025" rgba="0.4 0.5 0.6 0.1" />
+                    <site name="robot0:T_palm_auto_001" type="box" pos="-0.014542 -0.009990 -0.004545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_002" type="box" pos="-0.004325 -0.009990 -0.004545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_003" type="box" pos="0.005892 -0.009990 -0.004545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_004" type="box" pos="0.016108 -0.009990 -0.004545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_005" type="box" pos="0.026325 -0.009990 -0.004545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_006" type="box" pos="0.036542 -0.009990 -0.004545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_007" type="box" pos="-0.014542 -0.009990 0.003964" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_008" type="box" pos="-0.004325 -0.009990 0.003964" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_009" type="box" pos="0.005892 -0.009990 0.003964" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_010" type="box" pos="0.016108 -0.009990 0.003964" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_011" type="box" pos="0.026325 -0.009990 0.003964" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_012" type="box" pos="0.036542 -0.009990 0.003964" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_013" type="box" pos="-0.014542 -0.009990 0.012473" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_014" type="box" pos="-0.004325 -0.009990 0.012473" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_015" type="box" pos="0.005892 -0.009990 0.012473" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_016" type="box" pos="0.016108 -0.009990 0.012473" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_017" type="box" pos="0.026325 -0.009990 0.012473" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_018" type="box" pos="0.036542 -0.009990 0.012473" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_019" type="box" pos="-0.014542 -0.009990 0.020982" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_020" type="box" pos="-0.004325 -0.009990 0.020982" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_021" type="box" pos="0.005892 -0.009990 0.020982" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_022" type="box" pos="0.016108 -0.009990 0.020982" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_023" type="box" pos="0.026325 -0.009990 0.020982" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_024" type="box" pos="0.036542 -0.009990 0.020982" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_025" type="box" pos="-0.014542 -0.009990 0.029491" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_026" type="box" pos="-0.004325 -0.009990 0.029491" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_027" type="box" pos="0.005892 -0.009990 0.029491" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_028" type="box" pos="0.016108 -0.009990 0.029491" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_029" type="box" pos="0.026325 -0.009990 0.029491" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_030" type="box" pos="0.036542 -0.009990 0.029491" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_031" type="box" pos="-0.014542 -0.009990 0.038000" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_032" type="box" pos="-0.004325 -0.009990 0.038000" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_033" type="box" pos="0.005892 -0.009990 0.038000" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_034" type="box" pos="0.016108 -0.009990 0.038000" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_035" type="box" pos="0.026325 -0.009990 0.038000" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_036" type="box" pos="0.036542 -0.009990 0.038000" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_037" type="box" pos="-0.014542 -0.009990 0.046509" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_038" type="box" pos="-0.004325 -0.009990 0.046509" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_039" type="box" pos="0.005892 -0.009990 0.046509" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_040" type="box" pos="0.016108 -0.009990 0.046509" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_041" type="box" pos="0.026325 -0.009990 0.046509" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_042" type="box" pos="0.036542 -0.009990 0.046509" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_043" type="box" pos="-0.014542 -0.009990 0.055018" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_044" type="box" pos="-0.004325 -0.009990 0.055018" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_045" type="box" pos="0.005892 -0.009990 0.055018" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_046" type="box" pos="0.016108 -0.009990 0.055018" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_047" type="box" pos="0.026325 -0.009990 0.055018" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_048" type="box" pos="0.036542 -0.009990 0.055018" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_049" type="box" pos="-0.014542 -0.009990 0.063527" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_050" type="box" pos="-0.004325 -0.009990 0.063527" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_051" type="box" pos="0.005892 -0.009990 0.063527" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_052" type="box" pos="0.016108 -0.009990 0.063527" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_053" type="box" pos="0.026325 -0.009990 0.063527" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_054" type="box" pos="0.036542 -0.009990 0.063527" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_055" type="box" pos="-0.014542 -0.009990 0.072036" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_056" type="box" pos="-0.004325 -0.009990 0.072036" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_057" type="box" pos="0.005892 -0.009990 0.072036" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_auto_058" type="box" pos="0.016108 -0.009990 0.072036" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_b0" type="box" pos="0.026325 -0.009990 0.072036" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_b1" type="box" pos="0.036542 -0.009990 0.072036" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_bl" type="box" pos="-0.014542 -0.009990 0.080545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_bm" type="box" pos="-0.004325 -0.009990 0.080545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_br" type="box" pos="0.005892 -0.009990 0.080545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_fl" type="box" pos="0.016108 -0.009990 0.080545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_fm" type="box" pos="0.026325 -0.009990 0.080545" size="0.004358 0.002500 0.003505" />
+                    <site name="robot0:T_palm_fr" type="box" pos="0.036542 -0.009990 0.080545" size="0.004358 0.002500 0.003505" />
+                    <body name="robot0:ffknuckle" pos="0.033 0 0.095">
+                        <inertial pos="0 0 0" quat="0.52 0.854 0.006 -0.003" mass="0.008" diaginertia="1e-05 1e-05 1e-05" />
+                        <joint name="robot0:FFJ3" type="hinge" pos="0 0 0" axis="0 1 0" range="-0.349 0.349" user="1103" />
+                        <geom class="robot0:D_Vizual" name="robot0:V_ffknuckle" mesh="robot0:knuckle" />
+                        <body name="robot0:ffproximal" pos="0 0 0">
+                            <inertial pos="0 0 0.023" quat="0.707 -0.004 0.004 0.707" mass="0.014" diaginertia="1e-05 1e-05 1e-05" />
+                            <joint name="robot0:FFJ2" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1102" />
+                            <geom class="robot0:D_Vizual" name="robot0:V_ffproximal" mesh="robot0:F3" />
+                            <geom class="robot0:DC_Hand" name="robot0:C_ffproximal" type="capsule" pos="0 0 0.0225" size="0.01 0.0225" />
+                            <site name="robot0:T_ffproximal_auto_001" type="box" pos="-0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_002" type="box" pos="-0.002438 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_003" type="box" pos="0.002437 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_004" type="box" pos="0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_005" type="box" pos="-0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_006" type="box" pos="-0.002438 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_007" type="box" pos="0.002437 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_008" type="box" pos="0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_009" type="box" pos="-0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_010" type="box" pos="-0.002438 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_011" type="box" pos="0.002437 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_012" type="box" pos="0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_013" type="box" pos="-0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_014" type="box" pos="-0.002438 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_015" type="box" pos="0.002437 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_016" type="box" pos="0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_017" type="box" pos="-0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_018" type="box" pos="-0.002438 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_019" type="box" pos="0.002437 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_020" type="box" pos="0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_021" type="box" pos="-0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_022" type="box" pos="-0.002438 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_auto_023" type="box" pos="0.002437 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_back_left" type="box" pos="0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_ffproximal_back_right" type="box" pos="0.000000 0.009000 0.008083" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_ffproximal_front_left_bottom" type="box" pos="0.000000 0.009000 0.022500" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_ffproximal_front_left_top" type="box" pos="0.000000 0.009000 0.036917" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_ffproximal_front_right_bottom" type="box" pos="-0.009000 0.000000 0.022500" size="0.002500 0.009000 0.020875" />
+                            <site name="robot0:T_ffproximal_front_right_top" type="box" pos="0.009000 -0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                            <site name="robot0:T_ffproximal_tip" type="box" pos="0.009000 0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                            <body name="robot0:ffmiddle" pos="0 0 0.045">
+                                <inertial pos="0 0 0.011" quat="0.707 0 0 0.707" mass="0.012" diaginertia="1e-05 1e-05 1e-05" />
+                                <joint name="robot0:FFJ1" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1101" />
+                                <geom class="robot0:D_Vizual" name="robot0:V_ffmiddle" mesh="robot0:F2" />
+                                <geom class="robot0:DC_Hand" name="robot0:C_ffmiddle" type="capsule" pos="0 0 0.0125" size="0.00805 0.0125" />
+                                <site name="robot0:T_ffmiddle_auto_001" type="box" pos="-0.005265 -0.007245 0.002107" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_002" type="box" pos="0.000000 -0.007245 0.002107" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_003" type="box" pos="0.005265 -0.007245 0.002107" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_004" type="box" pos="-0.005265 -0.007245 0.005571" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_005" type="box" pos="0.000000 -0.007245 0.005571" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_006" type="box" pos="0.005265 -0.007245 0.005571" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_007" type="box" pos="-0.005265 -0.007245 0.009036" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_008" type="box" pos="0.000000 -0.007245 0.009036" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_009" type="box" pos="0.005265 -0.007245 0.009036" size="0.001882 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_010" type="box" pos="-0.005923 -0.007245 0.012500" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_011" type="box" pos="-0.001974 -0.007245 0.012500" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_012" type="box" pos="0.001974 -0.007245 0.012500" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_013" type="box" pos="0.005923 -0.007245 0.012500" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_014" type="box" pos="-0.005923 -0.007245 0.015964" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_015" type="box" pos="-0.001974 -0.007245 0.015964" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_016" type="box" pos="0.001974 -0.007245 0.015964" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_017" type="box" pos="0.005923 -0.007245 0.015964" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_018" type="box" pos="-0.005923 -0.007245 0.019429" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_019" type="box" pos="-0.001974 -0.007245 0.019429" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_020" type="box" pos="0.001974 -0.007245 0.019429" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_021" type="box" pos="0.005923 -0.007245 0.019429" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_022" type="box" pos="-0.005923 -0.007245 0.022893" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_023" type="box" pos="-0.001974 -0.007245 0.022893" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_024" type="box" pos="0.001974 -0.007245 0.022893" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_025" type="box" pos="0.005923 -0.007245 0.022893" size="0.001224 0.002500 0.000982" />
+                                <site name="robot0:T_ffmiddle_auto_026" type="box" pos="0.000000 0.007245 0.004417" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_ffmiddle_back_left" type="box" pos="0.000000 0.007245 0.012500" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_ffmiddle_back_right" type="box" pos="0.000000 0.007245 0.020583" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_ffmiddle_front_left" type="box" pos="-0.007245 0.000000 0.012500" size="0.002500 0.007147 0.011375" />
+                                <site name="robot0:T_ffmiddle_front_right" type="box" pos="0.007245 -0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                <site name="robot0:T_ffmiddle_tip" type="box" pos="0.007245 0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                <body name="robot0:ffdistal" pos="0 0 0.025">
+                                    <inertial pos="0 0 0.015" quat="0.707 -0.003 0.003 0.707" mass="0.01" diaginertia="1e-05 1e-05 1e-05" />
+                                    <joint name="robot0:FFJ0" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1100" />
+                                    <geom class="robot0:D_Vizual" name="robot0:V_ffdistal" pos="0 0 0.001" mesh="robot0:F1" />
+                                    <geom class="robot0:DC_Hand" name="robot0:C_ffdistal" type="capsule" pos="0 0 0.012" size="0.00705 0.012" condim="4" />
+                                    <site name="robot0:S_fftip" pos="0 0 0.026" group="3" />
+                                    <site class="robot0:D_Touch" name="robot0:Tch_fftip" />
+                                    <site name="robot0:T_fftip_auto_001" type="box" pos="-0.005211 -0.006345 0.002680" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_002" type="box" pos="-0.001737 -0.006345 0.002680" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_003" type="box" pos="0.001737 -0.006345 0.002680" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_004" type="box" pos="0.005211 -0.006345 0.002680" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_005" type="box" pos="-0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_006" type="box" pos="-0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_007" type="box" pos="0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_008" type="box" pos="0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_009" type="box" pos="-0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_010" type="box" pos="-0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_011" type="box" pos="0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_012" type="box" pos="0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_013" type="box" pos="-0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_014" type="box" pos="-0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_015" type="box" pos="0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_016" type="box" pos="0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_017" type="box" pos="-0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_018" type="box" pos="-0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_019" type="box" pos="0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_auto_020" type="box" pos="0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_fftip_back_left" type="box" pos="0.000000 0.006345 0.004233" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_fftip_back_right" type="box" pos="0.000000 0.006345 0.012000" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_fftip_front_left" type="box" pos="0.000000 0.006345 0.019767" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_fftip_front_right" type="box" pos="-0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                    <site name="robot0:T_fftip_tip" type="box" pos="0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                    <body name="robot0:mfknuckle" pos="0.011 0 0.099">
+                        <inertial pos="0 0 0" quat="0.52 0.854 0.006 -0.003" mass="0.008" diaginertia="1e-05 1e-05 1e-05" />
+                        <joint name="robot0:MFJ3" type="hinge" pos="0 0 0" axis="0 1 0" range="-0.349 0.349" user="1107" />
+                        <geom class="robot0:D_Vizual" name="robot0:V_mfknuckle" mesh="robot0:knuckle" />
+                        <body name="robot0:mfproximal" pos="0 0 0">
+                            <inertial pos="0 0 0.023" quat="0.707 -0.004 0.004 0.707" mass="0.014" diaginertia="1e-05 1e-05 1e-05" />
+                            <joint name="robot0:MFJ2" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1106" />
+                            <geom class="robot0:D_Vizual" name="robot0:V_mfproximal" mesh="robot0:F3" />
+                            <geom class="robot0:DC_Hand" name="robot0:C_mfproximal" type="capsule" pos="0 0 0.0225" size="0.01 0.0225" />
+                            <site name="robot0:T_mfproximal_auto_001" type="box" pos="-0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_002" type="box" pos="-0.002438 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_003" type="box" pos="0.002437 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_004" type="box" pos="0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_005" type="box" pos="-0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_006" type="box" pos="-0.002438 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_007" type="box" pos="0.002437 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_008" type="box" pos="0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_009" type="box" pos="-0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_010" type="box" pos="-0.002438 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_011" type="box" pos="0.002437 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_012" type="box" pos="0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_013" type="box" pos="-0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_014" type="box" pos="-0.002438 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_015" type="box" pos="0.002437 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_016" type="box" pos="0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_017" type="box" pos="-0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_018" type="box" pos="-0.002438 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_019" type="box" pos="0.002437 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_020" type="box" pos="0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_021" type="box" pos="-0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_022" type="box" pos="-0.002438 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_auto_023" type="box" pos="0.002437 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_back_left" type="box" pos="0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_mfproximal_back_right" type="box" pos="0.000000 0.009000 0.008083" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_mfproximal_front_left_bottom" type="box" pos="0.000000 0.009000 0.022500" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_mfproximal_front_left_top" type="box" pos="0.000000 0.009000 0.036917" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_mfproximal_front_right_bottom" type="box" pos="-0.009000 0.000000 0.022500" size="0.002500 0.009000 0.020875" />
+                            <site name="robot0:T_mfproximal_front_right_top" type="box" pos="0.009000 -0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                            <site name="robot0:T_mfproximal_tip" type="box" pos="0.009000 0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                            <body name="robot0:mfmiddle" pos="0 0 0.045">
+                                <inertial pos="0 0 0.012" quat="0.707 0 0 0.707" mass="0.012" diaginertia="1e-05 1e-05 1e-05" />
+                                <joint name="robot0:MFJ1" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1105" />
+                                <geom class="robot0:D_Vizual" name="robot0:V_mfmiddle" mesh="robot0:F2" />
+                                <geom class="robot0:DC_Hand" name="robot0:C_mfmiddle" type="capsule" pos="0 0 0.0125" size="0.00805 0.0125" />
+                                <site name="robot0:T_mfmiddle_auto_001" type="box" pos="-0.005923 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_002" type="box" pos="-0.001974 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_003" type="box" pos="0.001974 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_004" type="box" pos="0.005923 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_005" type="box" pos="-0.005923 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_006" type="box" pos="-0.001974 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_007" type="box" pos="0.001974 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_008" type="box" pos="0.005923 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_009" type="box" pos="-0.005923 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_010" type="box" pos="-0.001974 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_011" type="box" pos="0.001974 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_012" type="box" pos="0.005923 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_013" type="box" pos="-0.005923 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_014" type="box" pos="-0.001974 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_015" type="box" pos="0.001974 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_016" type="box" pos="0.005923 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_017" type="box" pos="-0.005923 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_018" type="box" pos="-0.001974 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_019" type="box" pos="0.001974 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_020" type="box" pos="0.005923 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_021" type="box" pos="-0.005923 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_022" type="box" pos="-0.001974 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_023" type="box" pos="0.001974 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_024" type="box" pos="0.005923 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_mfmiddle_auto_025" type="box" pos="0.000000 0.007245 0.004417" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_mfmiddle_back_left" type="box" pos="0.000000 0.007245 0.012500" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_mfmiddle_back_right" type="box" pos="0.000000 0.007245 0.020583" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_mfmiddle_front_left" type="box" pos="-0.007245 0.000000 0.012500" size="0.002500 0.007147 0.011375" />
+                                <site name="robot0:T_mfmiddle_front_right" type="box" pos="0.007245 -0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                <site name="robot0:T_mfmiddle_tip" type="box" pos="0.007245 0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                <body name="robot0:mfdistal" pos="0 0 0.025">
+                                    <inertial pos="0 0 0.015" quat="0.707 -0.003 0.003 0.707" mass="0.01" diaginertia="1e-05 1e-05 1e-05" />
+                                    <joint name="robot0:MFJ0" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1104" />
+                                    <geom class="robot0:D_Vizual" name="robot0:V_mfdistal" mesh="robot0:F1" />
+                                    <geom class="robot0:DC_Hand" name="robot0:C_mfdistal" type="capsule" pos="0 0 0.012" size="0.00705 0.012" condim="4" />
+                                    <site name="robot0:S_mftip" pos="0 0 0.026" group="3" />
+                                    <site class="robot0:D_Touch" name="robot0:Tch_mftip" />
+                                    <site name="robot0:T_mftip_auto_001" type="box" pos="-0.004632 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_002" type="box" pos="0.000000 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_003" type="box" pos="0.004632 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_004" type="box" pos="-0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_005" type="box" pos="-0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_006" type="box" pos="0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_007" type="box" pos="0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_008" type="box" pos="-0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_009" type="box" pos="-0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_010" type="box" pos="0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_011" type="box" pos="0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_012" type="box" pos="-0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_013" type="box" pos="-0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_014" type="box" pos="0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_015" type="box" pos="0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_016" type="box" pos="-0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_017" type="box" pos="-0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_018" type="box" pos="0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_auto_019" type="box" pos="0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_mftip_back_left" type="box" pos="0.000000 0.006345 0.004233" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_mftip_back_right" type="box" pos="0.000000 0.006345 0.012000" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_mftip_front_left" type="box" pos="0.000000 0.006345 0.019767" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_mftip_front_right" type="box" pos="-0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                    <site name="robot0:T_mftip_tip" type="box" pos="0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                    <body name="robot0:rfknuckle" pos="-0.011 0 0.095">
+                        <inertial pos="0 0 0" quat="0.52 0.854 0.006 -0.003" mass="0.008" diaginertia="1e-05 1e-05 1e-05" />
+                        <joint name="robot0:RFJ3" type="hinge" pos="0 0 0" axis="0 1 0" range="-0.349 0.349" user="1111" />
+                        <geom class="robot0:D_Vizual" name="robot0:V_rfknuckle" mesh="robot0:knuckle" />
+                        <body name="robot0:rfproximal" pos="0 0 0">
+                            <inertial pos="0 0 0.023" quat="0.707 -0.004 0.004 0.707" mass="0.014" diaginertia="1e-05 1e-05 1e-05" />
+                            <joint name="robot0:RFJ2" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1110" />
+                            <geom class="robot0:D_Vizual" name="robot0:V_rfproximal" mesh="robot0:F3" />
+                            <geom class="robot0:DC_Hand" name="robot0:C_rfproximal" type="capsule" pos="0 0 0.0225" size="0.01 0.0225" />
+                            <site name="robot0:T_rfproximal_auto_001" type="box" pos="-0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_002" type="box" pos="-0.002438 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_003" type="box" pos="0.002437 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_004" type="box" pos="0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_005" type="box" pos="-0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_006" type="box" pos="-0.002438 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_007" type="box" pos="0.002437 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_008" type="box" pos="0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_009" type="box" pos="-0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_010" type="box" pos="-0.002438 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_011" type="box" pos="0.002437 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_012" type="box" pos="0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_013" type="box" pos="-0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_014" type="box" pos="-0.002438 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_015" type="box" pos="0.002437 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_016" type="box" pos="0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_017" type="box" pos="-0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_018" type="box" pos="-0.002438 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_019" type="box" pos="0.002437 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_020" type="box" pos="0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_021" type="box" pos="-0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_022" type="box" pos="-0.002438 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_auto_023" type="box" pos="0.002437 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_back_left" type="box" pos="0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                            <site name="robot0:T_rfproximal_back_right" type="box" pos="0.000000 0.009000 0.008083" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_rfproximal_front_left_bottom" type="box" pos="0.000000 0.009000 0.022500" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_rfproximal_front_left_top" type="box" pos="0.000000 0.009000 0.036917" size="0.009000 0.002500 0.006458" />
+                            <site name="robot0:T_rfproximal_front_right_bottom" type="box" pos="-0.009000 0.000000 0.022500" size="0.002500 0.009000 0.020875" />
+                            <site name="robot0:T_rfproximal_front_right_top" type="box" pos="0.009000 -0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                            <site name="robot0:T_rfproximal_tip" type="box" pos="0.009000 0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                            <body name="robot0:rfmiddle" pos="0 0 0.045">
+                                <inertial pos="0 0 0.012" quat="0.707 0 0 0.707" mass="0.012" diaginertia="1e-05 1e-05 1e-05" />
+                                <joint name="robot0:RFJ1" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1109" />
+                                <geom class="robot0:D_Vizual" name="robot0:V_rfmiddle" mesh="robot0:F2" />
+                                <geom class="robot0:DC_Hand" name="robot0:C_rfmiddle" type="capsule" pos="0 0 0.0125" size="0.00805 0.0125" />
+                                <site name="robot0:T_rfmiddle_auto_001" type="box" pos="-0.005923 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_002" type="box" pos="-0.001974 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_003" type="box" pos="0.001974 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_004" type="box" pos="0.005923 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_005" type="box" pos="-0.005923 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_006" type="box" pos="-0.001974 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_007" type="box" pos="0.001974 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_008" type="box" pos="0.005923 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_009" type="box" pos="-0.005923 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_010" type="box" pos="-0.001974 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_011" type="box" pos="0.001974 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_012" type="box" pos="0.005923 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_013" type="box" pos="-0.005923 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_014" type="box" pos="-0.001974 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_015" type="box" pos="0.001974 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_016" type="box" pos="0.005923 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_017" type="box" pos="-0.005923 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_018" type="box" pos="-0.001974 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_019" type="box" pos="0.001974 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_020" type="box" pos="0.005923 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_021" type="box" pos="-0.005923 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_022" type="box" pos="-0.001974 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_023" type="box" pos="0.001974 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_024" type="box" pos="0.005923 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                <site name="robot0:T_rfmiddle_auto_025" type="box" pos="0.000000 0.007245 0.004417" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_rfmiddle_back_left" type="box" pos="0.000000 0.007245 0.012500" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_rfmiddle_back_right" type="box" pos="0.000000 0.007245 0.020583" size="0.007147 0.002500 0.003292" />
+                                <site name="robot0:T_rfmiddle_front_left" type="box" pos="-0.007245 0.000000 0.012500" size="0.002500 0.007147 0.011375" />
+                                <site name="robot0:T_rfmiddle_front_right" type="box" pos="0.007245 -0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                <site name="robot0:T_rfmiddle_tip" type="box" pos="0.007245 0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                <body name="robot0:rfdistal" pos="0 0 0.025">
+                                    <inertial pos="0 0 0.015" quat="0.707 -0.003 0.003 0.707" mass="0.01" diaginertia="1e-05 1e-05 1e-05" />
+                                    <joint name="robot0:RFJ0" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1108" />
+                                    <geom class="robot0:D_Vizual" name="robot0:V_rfdistal" mesh="robot0:F1" pos="0 0 0.001" />
+                                    <geom class="robot0:DC_Hand" name="robot0:C_rfdistal" type="capsule" pos="0 0 0.012" size="0.00705 0.012" condim="4" />
+                                    <site name="robot0:S_rftip" pos="0 0 0.026" group="3" />
+                                    <site class="robot0:D_Touch" name="robot0:Tch_rftip" />
+                                    <site name="robot0:T_rftip_auto_001" type="box" pos="-0.004632 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_002" type="box" pos="0.000000 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_003" type="box" pos="0.004632 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_004" type="box" pos="-0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_005" type="box" pos="-0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_006" type="box" pos="0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_007" type="box" pos="0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_008" type="box" pos="-0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_009" type="box" pos="-0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_010" type="box" pos="0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_011" type="box" pos="0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_012" type="box" pos="-0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_013" type="box" pos="-0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_014" type="box" pos="0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_015" type="box" pos="0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_016" type="box" pos="-0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_017" type="box" pos="-0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_018" type="box" pos="0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_auto_019" type="box" pos="0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                    <site name="robot0:T_rftip_back_left" type="box" pos="0.000000 0.006345 0.004233" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_rftip_back_right" type="box" pos="0.000000 0.006345 0.012000" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_rftip_front_left" type="box" pos="0.000000 0.006345 0.019767" size="0.006197 0.002500 0.003133" />
+                                    <site name="robot0:T_rftip_front_right" type="box" pos="-0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                    <site name="robot0:T_rftip_tip" type="box" pos="0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                    <body name="robot0:lfmetacarpal" pos="-0.017 0 0.044">
+                        <inertial pos="-0.014 0.001 0.014" quat="0.709 -0.092 -0.063 0.696" mass="0.075" diaginertia="1e-05 1e-05 1e-05" />
+                        <joint name="robot0:LFJ4" type="hinge" pos="0 0 0" axis="0.571 0 0.821" range="0 0.785" user="1116" />
+                        <geom class="robot0:D_Vizual" name="robot0:V_lfmetacarpal" pos="-0.016 0 -0.023" mesh="robot0:lfmetacarpal" />
+                        <geom class="robot0:DC_Hand" name="robot0:C_lfmetacarpal" type="box" pos="-0.0165 0 0.01" size="0.0095 0.0111 0.025" rgba="0.4 0.5 0.6 0.2" />
+                        <site name="robot0:T_lfmetacarpal_auto_001" type="box" pos="-0.021138 -0.009990 -0.010000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_002" type="box" pos="-0.011862 -0.009990 -0.010000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_003" type="box" pos="-0.021138 -0.009990 -0.002000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_004" type="box" pos="-0.011862 -0.009990 -0.002000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_005" type="box" pos="-0.021138 -0.009990 0.006000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_006" type="box" pos="-0.011862 -0.009990 0.006000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_007" type="box" pos="-0.021138 -0.009990 0.014000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_008" type="box" pos="-0.011862 -0.009990 0.014000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_009" type="box" pos="-0.021138 -0.009990 0.022000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_010" type="box" pos="-0.011862 -0.009990 0.022000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_auto_011" type="box" pos="-0.021138 -0.009990 0.030000" size="0.003887 0.002500 0.003250" />
+                        <site name="robot0:T_lfmetacarpal_front" type="box" pos="-0.011862 -0.009990 0.030000" size="0.003887 0.002500 0.003250" />
+                        <body name="robot0:lfknuckle" pos="-0.017 0 0.044">
+                            <inertial pos="0 0 0" quat="0.52 0.854 0.006 -0.003" mass="0.008" diaginertia="1e-05 1e-05 1e-05" />
+                            <joint name="robot0:LFJ3" type="hinge" pos="0 0 0" axis="0 1 0" range="-0.349 0.349" user="1115" />
+                            <geom class="robot0:D_Vizual" name="robot0:V_lfknuckle" mesh="robot0:knuckle" />
+                            <body name="robot0:lfproximal" pos="0 0 0">
+                                <inertial pos="0 0 0.023" quat="0.707 -0.004 0.004 0.707" mass="0.014" diaginertia="1e-05 1e-05 1e-05" />
+                                <joint name="robot0:LFJ2" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1114" />
+                                <geom class="robot0:D_Vizual" name="robot0:V_lfproximal" mesh="robot0:F3" />
+                                <geom class="robot0:DC_Hand" name="robot0:C_lfproximal" type="capsule" pos="0 0 0.0225" size="0.01 0.0225" />
+                                <site name="robot0:T_lfproximal_auto_001" type="box" pos="-0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_002" type="box" pos="-0.002438 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_003" type="box" pos="0.002437 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_004" type="box" pos="0.007312 -0.009000 0.004479" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_005" type="box" pos="-0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_006" type="box" pos="-0.002438 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_007" type="box" pos="0.002437 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_008" type="box" pos="0.007312 -0.009000 0.011687" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_009" type="box" pos="-0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_010" type="box" pos="-0.002438 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_011" type="box" pos="0.002437 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_012" type="box" pos="0.007312 -0.009000 0.018896" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_013" type="box" pos="-0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_014" type="box" pos="-0.002438 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_015" type="box" pos="0.002437 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_016" type="box" pos="0.007312 -0.009000 0.026104" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_017" type="box" pos="-0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_018" type="box" pos="-0.002438 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_019" type="box" pos="0.002437 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_020" type="box" pos="0.007312 -0.009000 0.033312" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_021" type="box" pos="-0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_022" type="box" pos="-0.002438 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_auto_023" type="box" pos="0.002437 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_back_left" type="box" pos="0.007312 -0.009000 0.040521" size="0.001687 0.002500 0.002854" />
+                                <site name="robot0:T_lfproximal_back_right" type="box" pos="0.000000 0.009000 0.008083" size="0.009000 0.002500 0.006458" />
+                                <site name="robot0:T_lfproximal_front_left_bottom" type="box" pos="0.000000 0.009000 0.022500" size="0.009000 0.002500 0.006458" />
+                                <site name="robot0:T_lfproximal_front_left_top" type="box" pos="0.000000 0.009000 0.036917" size="0.009000 0.002500 0.006458" />
+                                <site name="robot0:T_lfproximal_front_right_bottom" type="box" pos="-0.009000 0.000000 0.022500" size="0.002500 0.009000 0.020875" />
+                                <site name="robot0:T_lfproximal_front_right_top" type="box" pos="0.009000 -0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                                <site name="robot0:T_lfproximal_tip" type="box" pos="0.009000 0.004875 0.022500" size="0.002500 0.004125 0.020875" />
+                                <body name="robot0:lfmiddle" pos="0 0 0.045">
+                                    <inertial pos="0 0 0.012" quat="0.707 0 0 0.707" mass="0.012" diaginertia="1e-05 1e-05 1e-05" />
+                                    <joint name="robot0:LFJ1" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1113" />
+                                    <geom class="robot0:D_Vizual" name="robot0:V_lfmiddle" mesh="robot0:F2" />
+                                    <geom class="robot0:DC_Hand" name="robot0:C_lfmiddle" type="capsule" pos="0 0 0.0125" size="0.00805 0.0125" />
+                                    <site name="robot0:T_lfmiddle_auto_001" type="box" pos="-0.005923 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_002" type="box" pos="-0.001974 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_003" type="box" pos="0.001974 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_004" type="box" pos="0.005923 -0.007245 0.002396" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_005" type="box" pos="-0.005923 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_006" type="box" pos="-0.001974 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_007" type="box" pos="0.001974 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_008" type="box" pos="0.005923 -0.007245 0.006438" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_009" type="box" pos="-0.005923 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_010" type="box" pos="-0.001974 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_011" type="box" pos="0.001974 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_012" type="box" pos="0.005923 -0.007245 0.010479" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_013" type="box" pos="-0.005923 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_014" type="box" pos="-0.001974 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_015" type="box" pos="0.001974 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_016" type="box" pos="0.005923 -0.007245 0.014521" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_017" type="box" pos="-0.005923 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_018" type="box" pos="-0.001974 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_019" type="box" pos="0.001974 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_020" type="box" pos="0.005923 -0.007245 0.018563" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_021" type="box" pos="-0.005923 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_022" type="box" pos="-0.001974 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_023" type="box" pos="0.001974 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_024" type="box" pos="0.005923 -0.007245 0.022604" size="0.001224 0.002500 0.001271" />
+                                    <site name="robot0:T_lfmiddle_auto_025" type="box" pos="0.000000 0.007245 0.004417" size="0.007147 0.002500 0.003292" />
+                                    <site name="robot0:T_lfmiddle_back_left" type="box" pos="0.000000 0.007245 0.012500" size="0.007147 0.002500 0.003292" />
+                                    <site name="robot0:T_lfmiddle_back_right" type="box" pos="0.000000 0.007245 0.020583" size="0.007147 0.002500 0.003292" />
+                                    <site name="robot0:T_lfmiddle_front_left" type="box" pos="-0.007245 0.000000 0.012500" size="0.002500 0.007147 0.011375" />
+                                    <site name="robot0:T_lfmiddle_front_right" type="box" pos="0.007245 -0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                    <site name="robot0:T_lfmiddle_tip" type="box" pos="0.007245 0.003949 0.012500" size="0.002500 0.003199 0.011375" />
+                                    <body name="robot0:lfdistal" pos="0 0 0.025">
+                                        <inertial pos="0 0 0.015" quat="0.707 -0.003 0.003 0.707" mass="0.01" diaginertia="1e-05 1e-05 1e-05" />
+                                        <joint name="robot0:LFJ0" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.571" user="1112" />
+                                        <geom class="robot0:D_Vizual" name="robot0:V_lfdistal" mesh="robot0:F1" pos="0 0 0.001" />
+                                        <geom class="robot0:DC_Hand" name="robot0:C_lfdistal" type="capsule" pos="0 0 0.012" size="0.00705 0.012" condim="4" />
+                                        <site name="robot0:S_lftip" pos="0 0 0.026" group="3" />
+                                        <site class="robot0:D_Touch" name="robot0:Tch_lftip" />
+                                        <site name="robot0:T_lftip_auto_001" type="box" pos="-0.004632 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_002" type="box" pos="0.000000 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_003" type="box" pos="0.004632 -0.006345 0.002680" size="0.001566 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_004" type="box" pos="-0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_005" type="box" pos="-0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_006" type="box" pos="0.001737 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_007" type="box" pos="0.005211 -0.006345 0.007340" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_008" type="box" pos="-0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_009" type="box" pos="-0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_010" type="box" pos="0.001737 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_011" type="box" pos="0.005211 -0.006345 0.012000" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_012" type="box" pos="-0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_013" type="box" pos="-0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_014" type="box" pos="0.001737 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_015" type="box" pos="0.005211 -0.006345 0.016660" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_016" type="box" pos="-0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_017" type="box" pos="-0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_018" type="box" pos="0.001737 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_auto_019" type="box" pos="0.005211 -0.006345 0.021320" size="0.000987 0.002500 0.001580" />
+                                        <site name="robot0:T_lftip_back_left" type="box" pos="0.000000 0.006345 0.004233" size="0.006197 0.002500 0.003133" />
+                                        <site name="robot0:T_lftip_back_right" type="box" pos="0.000000 0.006345 0.012000" size="0.006197 0.002500 0.003133" />
+                                        <site name="robot0:T_lftip_front_left" type="box" pos="0.000000 0.006345 0.019767" size="0.006197 0.002500 0.003133" />
+                                        <site name="robot0:T_lftip_front_right" type="box" pos="-0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                        <site name="robot0:T_lftip_tip" type="box" pos="0.006345 0.000000 0.012000" size="0.002500 0.006197 0.010900" />
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                    <body name="robot0:thbase" pos="0.034 -0.009 0.029" axisangle="0 1 0 0.785">
+                        <inertial pos="0 0 0" mass="0.01" diaginertia="1e-05 1e-05 1e-05" />
+                        <joint name="robot0:THJ4" type="hinge" pos="0 0 0" axis="0 0 -1" range="-1.047 1.047" user="1121" />
+                        <geom name="robot0:V_thbase" type="box" group="1" pos="0 0 0" size="0.001 0.001 0.001" />
+                        <body name="robot0:thproximal" pos="0 0 0">
+                            <inertial pos="0 0 0.017" quat="0.982 0 0.001 0.191" mass="0.016" diaginertia="1e-05 1e-05 1e-05" />
+                            <joint name="robot0:THJ3" type="hinge" pos="0 0 0" axis="1 0 0" range="0 1.222" user="1120" />
+                            <geom class="robot0:D_Vizual" name="robot0:V_thproximal" mesh="robot0:TH3_z" />
+                            <geom class="robot0:DC_Hand" name="robot0:C_thproximal" type="capsule" pos="0 0 0.019" size="0.013 0.019" rgba="0.4 0.5 0.6 0.1" />
+                            <site name="robot0:T_thproximal_auto_001" type="box" pos="-0.009450 -0.011700 0.003750" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_002" type="box" pos="-0.003150 -0.011700 0.003750" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_003" type="box" pos="0.003150 -0.011700 0.003750" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_004" type="box" pos="0.009450 -0.011700 0.003750" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_005" type="box" pos="-0.009450 -0.011700 0.009850" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_006" type="box" pos="-0.003150 -0.011700 0.009850" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_007" type="box" pos="0.003150 -0.011700 0.009850" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_008" type="box" pos="0.009450 -0.011700 0.009850" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_009" type="box" pos="-0.009450 -0.011700 0.015950" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_010" type="box" pos="-0.003150 -0.011700 0.015950" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_011" type="box" pos="0.003150 -0.011700 0.015950" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_012" type="box" pos="0.009450 -0.011700 0.015950" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_013" type="box" pos="-0.009450 -0.011700 0.022050" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_014" type="box" pos="-0.003150 -0.011700 0.022050" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_015" type="box" pos="0.003150 -0.011700 0.022050" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_016" type="box" pos="0.009450 -0.011700 0.022050" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_017" type="box" pos="-0.009450 -0.011700 0.028150" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_018" type="box" pos="-0.003150 -0.011700 0.028150" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_019" type="box" pos="0.003150 -0.011700 0.028150" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_020" type="box" pos="0.009450 -0.011700 0.028150" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_021" type="box" pos="-0.009450 -0.011700 0.034250" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_022" type="box" pos="-0.003150 -0.011700 0.034250" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_023" type="box" pos="0.003150 -0.011700 0.034250" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_024" type="box" pos="0.009450 -0.011700 0.034250" size="0.002400 0.002500 0.002300" />
+                            <site name="robot0:T_thproximal_auto_025" type="box" pos="0.000000 0.011700 0.006800" size="0.011850 0.002500 0.005350" />
+                            <site name="robot0:T_thproximal_back_left" type="box" pos="0.000000 0.011700 0.019000" size="0.011850 0.002500 0.005350" />
+                            <site name="robot0:T_thproximal_back_right" type="box" pos="0.000000 0.011700 0.031200" size="0.011850 0.002500 0.005350" />
+                            <site name="robot0:T_thproximal_front_left" type="box" pos="-0.011700 0.000000 0.019000" size="0.002500 0.011850 0.017550" />
+                            <site name="robot0:T_thproximal_front_right" type="box" pos="0.011700 -0.006300 0.019000" size="0.002500 0.005550 0.017550" />
+                            <site name="robot0:T_thproximal_tip" type="box" pos="0.011700 0.006300 0.019000" size="0.002500 0.005550 0.017550" />
+                            <body name="robot0:thhub" pos="0 0 0.038">
+                                <inertial pos="0 0 0" mass="0.002" diaginertia="1e-05 1e-05 1e-05" />
+                                <joint name="robot0:THJ2" type="hinge" pos="0 0 0" axis="1 0 0" range="-0.209 0.209" user="1119" />
+                                <geom name="robot0:V_thhub" type="box" group="1" pos="0 0 0" size="0.001 0.001 0.001" />
+                                <body name="robot0:thmiddle" pos="0 0 0">
+                                    <inertial pos="0 0 0.016" quat="1 -0.001 -0.007 0.003" mass="0.016" diaginertia="1e-05 1e-05 1e-05" />
+                                    <joint name="robot0:THJ1" type="hinge" pos="0 0 0" axis="0 1 0" range="-0.524 0.524" user="1118" />
+                                    <geom class="robot0:D_Vizual" name="robot0:V_thmiddle" mesh="robot0:TH2_z" />
+                                    <geom class="robot0:DC_Hand" name="robot0:C_thmiddle" type="capsule" pos="0 0 0.016" size="0.011 0.016" />
+                                    <site name="robot0:T_thmiddle_auto_001" type="box" pos="-0.008025 -0.009900 0.003125" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_002" type="box" pos="-0.002675 -0.009900 0.003125" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_003" type="box" pos="0.002675 -0.009900 0.003125" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_004" type="box" pos="0.008025 -0.009900 0.003125" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_005" type="box" pos="-0.008025 -0.009900 0.008275" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_006" type="box" pos="-0.002675 -0.009900 0.008275" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_007" type="box" pos="0.002675 -0.009900 0.008275" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_008" type="box" pos="0.008025 -0.009900 0.008275" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_009" type="box" pos="-0.008025 -0.009900 0.013425" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_010" type="box" pos="-0.002675 -0.009900 0.013425" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_011" type="box" pos="0.002675 -0.009900 0.013425" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_012" type="box" pos="0.008025 -0.009900 0.013425" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_013" type="box" pos="-0.008025 -0.009900 0.018575" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_014" type="box" pos="-0.002675 -0.009900 0.018575" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_015" type="box" pos="0.002675 -0.009900 0.018575" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_016" type="box" pos="0.008025 -0.009900 0.018575" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_017" type="box" pos="-0.008025 -0.009900 0.023725" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_018" type="box" pos="-0.002675 -0.009900 0.023725" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_019" type="box" pos="0.002675 -0.009900 0.023725" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_020" type="box" pos="0.008025 -0.009900 0.023725" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_021" type="box" pos="-0.008025 -0.009900 0.028875" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_022" type="box" pos="-0.002675 -0.009900 0.028875" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_023" type="box" pos="0.002675 -0.009900 0.028875" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_024" type="box" pos="0.008025 -0.009900 0.028875" size="0.001925 0.002500 0.001825" />
+                                    <site name="robot0:T_thmiddle_auto_025" type="box" pos="0.000000 0.009900 0.005700" size="0.009950 0.002500 0.004400" />
+                                    <site name="robot0:T_thmiddle_back_left" type="box" pos="0.000000 0.009900 0.016000" size="0.009950 0.002500 0.004400" />
+                                    <site name="robot0:T_thmiddle_back_right" type="box" pos="0.000000 0.009900 0.026300" size="0.009950 0.002500 0.004400" />
+                                    <site name="robot0:T_thmiddle_front_left" type="box" pos="-0.009900 0.000000 0.016000" size="0.002500 0.009950 0.014700" />
+                                    <site name="robot0:T_thmiddle_front_right" type="box" pos="0.009900 -0.005350 0.016000" size="0.002500 0.004600 0.014700" />
+                                    <site name="robot0:T_thmiddle_tip" type="box" pos="0.009900 0.005350 0.016000" size="0.002500 0.004600 0.014700" />
+                                    <body name="robot0:thdistal" pos="0 0 0.032">
+                                        <inertial pos="0 0 0.016" quat="0.999 -0.005 -0.047 0.005" mass="0.016" diaginertia="1e-05 1e-05 1e-05" />
+                                        <joint name="robot0:THJ0" type="hinge" pos="0 0 0" axis="0 1 0" range="-1.571 0" user="1117" />
+                                        <geom class="robot0:D_Vizual" name="robot0:V_thdistal" mesh="robot0:TH1_z" />
+                                        <geom class="robot0:DC_Hand" name="robot0:C_thdistal" type="capsule" pos="0 0 0.013" size="0.00918 0.013" condim="4" />
+                                        <site name="robot0:S_thtip" pos="0 0 0.0275" group="3" />
+                                        <site class="robot0:D_Touch" name="robot0:Tch_thtip" size="0.005 0.011 0.016" pos="-0.005 0 0.02" />
+                                        <site name="robot0:T_thtip_auto_001" type="box" pos="-0.005981 -0.008262 0.002920" size="0.002240 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_002" type="box" pos="0.000000 -0.008262 0.002920" size="0.002240 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_003" type="box" pos="0.005981 -0.008262 0.002920" size="0.002240 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_004" type="box" pos="-0.006728 -0.008262 0.007960" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_005" type="box" pos="-0.002243 -0.008262 0.007960" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_006" type="box" pos="0.002243 -0.008262 0.007960" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_007" type="box" pos="0.006728 -0.008262 0.007960" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_008" type="box" pos="-0.006728 -0.008262 0.013000" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_009" type="box" pos="-0.002243 -0.008262 0.013000" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_010" type="box" pos="0.002243 -0.008262 0.013000" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_011" type="box" pos="0.006728 -0.008262 0.013000" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_012" type="box" pos="-0.006728 -0.008262 0.018040" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_013" type="box" pos="-0.002243 -0.008262 0.018040" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_014" type="box" pos="0.002243 -0.008262 0.018040" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_015" type="box" pos="0.006728 -0.008262 0.018040" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_016" type="box" pos="-0.006728 -0.008262 0.023080" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_017" type="box" pos="-0.002243 -0.008262 0.023080" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_018" type="box" pos="0.002243 -0.008262 0.023080" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_auto_019" type="box" pos="0.006728 -0.008262 0.023080" size="0.001493 0.002500 0.001770" />
+                                        <site name="robot0:T_thtip_back_left" type="box" pos="0.000000 0.008262 0.004600" size="0.008221 0.002500 0.003450" />
+                                        <site name="robot0:T_thtip_back_right" type="box" pos="0.000000 0.008262 0.013000" size="0.008221 0.002500 0.003450" />
+                                        <site name="robot0:T_thtip_front_left" type="box" pos="0.000000 0.008262 0.021400" size="0.008221 0.002500 0.003450" />
+                                        <site name="robot0:T_thtip_front_right" type="box" pos="-0.008262 0.000000 0.013000" size="0.002500 0.008221 0.011850" />
+                                        <site name="robot0:T_thtip_tip" type="box" pos="0.008262 0.000000 0.013000" size="0.002500 0.008221 0.011850" />
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </body>
+</mujoco>

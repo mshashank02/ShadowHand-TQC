@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import shutil
 from typing import Any, Callable
+import xml.etree.ElementTree as ET
 
 import numpy as np
 
@@ -29,6 +30,20 @@ from object_conversion.validate_decomposition_contacts import (
 )
 from .rigid_flex_diagnostic import rigid_flex_edge_workaround
 from .rigid_flex_root_cause import ProbeScenario, topology_snapshot
+from .model_loader import _apply_reference_collision_defaults
+
+
+def _mujoco_311_compatible_xml(source: str | Path) -> Path:
+    """Remove only MuJoCo 3.11's obsolete, non-physical ``apirate`` attribute."""
+    source = Path(source).resolve()
+    tree = ET.parse(source)
+    option = tree.getroot().find("option")
+    if option is None or "apirate" not in option.attrib:
+        return source
+    option.attrib.pop("apirate")
+    output = source.with_name(f"{source.stem}_mujoco311{source.suffix}")
+    tree.write(output, encoding="utf-8", xml_declaration=True)
+    return output
 
 
 def _surface_probe_scenarios(model: Any, probe_radius: float) -> list[ProbeScenario]:
@@ -313,16 +328,24 @@ def _warp_onset(
 def compare_five_fixtures_cpu_warp(
     surface_xml: str | Path,
     features_path: str | Path,
+    *,
+    reference_compat: bool = False,
 ) -> dict[str, Any]:
     """Compare static CPU and Warp contact/tactile states on the five CPU fixtures."""
     import mujoco
 
     mjw, wp = _warp_bindings()
+    surface_xml = _mujoco_311_compatible_xml(surface_xml)
     features = json.loads(Path(features_path).read_text(encoding="utf-8"))["features"]
     fixtures: dict[str, Any] = {}
     with wp.ScopedDevice("cuda:0"):
         for fixture_name, fixture in HAND_FIXTURES.items():
             model = mujoco.MjModel.from_xml_path(str(surface_xml))
+            compatibility_changes = (
+                _apply_reference_collision_defaults(mujoco, model)
+                if reference_compat
+                else []
+            )
             target_id, _ = _configure_collision_geoms(
                 mujoco, model, target_geom_name=fixture["target_geom"]
             )
@@ -384,6 +407,8 @@ def compare_five_fixtures_cpu_warp(
         for fixture_name in FEATURE_NAMES:
             model, temporary_path = _temporary_probe_model(mujoco, Path(surface_xml))
             try:
+                if reference_compat:
+                    _apply_reference_collision_defaults(mujoco, model)
                 _, probe_id = _configure_collision_geoms(
                     mujoco, model, probe_geom_name=PROBE_GEOM_NAME
                 )
@@ -441,5 +466,7 @@ def compare_five_fixtures_cpu_warp(
         "mujoco_warp_version": mjw.__version__,
         "warp_version": wp.__version__,
         "surface_xml": str(Path(surface_xml).resolve()),
+        "reference_compat": reference_compat,
+        "compatibility_changes": compatibility_changes,
         "fixtures": fixtures,
     }

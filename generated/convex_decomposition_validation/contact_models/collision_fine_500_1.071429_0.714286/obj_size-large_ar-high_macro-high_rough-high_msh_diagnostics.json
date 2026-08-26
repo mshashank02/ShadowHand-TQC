@@ -1,0 +1,26 @@
+{
+  "bbox_max": [
+    1.0470450801364057,
+    0.95348955,
+    1.98192064
+  ],
+  "bbox_min": [
+    -1.1261244998563744,
+    -1.0151555594815223,
+    -1.88353545
+  ],
+  "bbox_size": [
+    2.17316957999278,
+    1.9686451094815223,
+    3.8654560900000003
+  ],
+  "binary": true,
+  "element_count": 8552,
+  "element_types": {
+    "4": 8552
+  },
+  "format": "2.2",
+  "node_count": 2387,
+  "path": "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/obj_size-large_ar-high_macro-high_rough-high.msh",
+  "warnings": []
+}

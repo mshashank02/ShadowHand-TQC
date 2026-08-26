@@ -33,6 +33,7 @@ def main() -> int:
     five.add_argument("--xml", type=Path, required=True)
     five.add_argument("--features", type=Path, required=True)
     five.add_argument("--output", type=Path, required=True)
+    five.add_argument("--reference-compat", action="store_true")
     args = parser.parse_args()
 
     if args.command == "prepare":
@@ -44,7 +45,9 @@ def main() -> int:
         payload = collect_warp_matrix(args.xml, args.states, apply_tet_guard=False)
         write_json(args.output, payload)
     else:
-        payload = compare_five_fixtures_cpu_warp(args.xml, args.features)
+        payload = compare_five_fixtures_cpu_warp(
+            args.xml, args.features, reference_compat=args.reference_compat
+        )
         write_json(args.output, payload)
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

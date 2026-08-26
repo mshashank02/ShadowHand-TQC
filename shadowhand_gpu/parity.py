@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,16 @@ def tactile_metrics(
     correlation: float | None = None
     if reference.size >= 2 and np.std(reference) > 0.0 and np.std(actual) > 0.0:
         correlation = float(np.corrcoef(reference, actual)[0, 1])
+    reference_norm = float(np.linalg.norm(reference))
+    actual_norm = float(np.linalg.norm(actual))
+    if reference_norm == 0.0 and actual_norm == 0.0:
+        cosine_similarity = 1.0
+    elif reference_norm == 0.0 or actual_norm == 0.0:
+        cosine_similarity = 0.0
+    else:
+        cosine_similarity = float(
+            np.dot(reference, actual) / (reference_norm * actual_norm)
+        )
     nonzero_errors = np.flatnonzero(absolute_error > 0.0)
     order = nonzero_errors[
         np.argsort(-absolute_error[nonzero_errors], kind="stable")[: min(top_k, nonzero_errors.size)]
@@ -89,6 +100,7 @@ def tactile_metrics(
         "median_absolute_error": float(np.median(absolute_error)) if absolute_error.size else 0.0,
         "rmse": float(np.sqrt(np.mean(np.square(actual - reference)))) if reference.size else 0.0,
         "pearson_correlation": correlation,
+        "cosine_similarity": cosine_similarity,
         "active_threshold": float(active_threshold),
         "active_sensors_cpu": len(ref_active),
         "active_sensors_warp": len(actual_active),
@@ -211,6 +223,18 @@ def _contact_comparison(cpu: list[dict[str, Any]], warp: list[dict[str, Any]]) -
     }
 
 
+def contact_geom_pair_counts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return an order-independent multiset of named contact geom pairs."""
+    counts = Counter(
+        tuple(sorted(str(name) for name in contact["geom_names"] if name is not None))
+        for contact in contacts
+    )
+    return [
+        {"geom_names": list(pair), "count": int(count)}
+        for pair, count in sorted(counts.items())
+    ]
+
+
 def zero_action_control(model: Any) -> np.ndarray:
     """Return the absolute actuator control produced by the task's zero action."""
     if int(model.nu) == 0:
@@ -308,8 +332,12 @@ def compare_one_step(
         "settle_steps": settle_steps if mode == "settled_contact" else 0,
         "cpu_contacts_before_step": pre_cpu_contacts,
         "cpu_contacts_after_step": int(cpu_data.ncon),
+        "warp_contacts_after_step": int(gpu_data.ncon),
+        "cpu_constraints_after_step": int(cpu_data.nefc),
+        "warp_constraints_after_step": int(gpu_data.nefc),
         "gpu_active_contact_candidates": int(backend.active_contact_counts.detach().cpu().sum()),
         "gpu_constraints": backend.constraint_counts.detach().cpu().tolist(),
+        "gpu_overflow_flags": backend.overflow_flags.detach().cpu().tolist(),
         "qpos": error_metrics(cpu_data.qpos, gpu_qpos).to_dict(),
         "qvel": error_metrics(cpu_data.qvel, gpu_qvel).to_dict(),
         "object_pose": {
@@ -341,6 +369,11 @@ def compare_one_step(
         "cpu_touch_max": float(np.max(cpu_touch, initial=0.0)),
         "gpu_touch_max": float(np.max(gpu_touch, initial=0.0)),
         "contact_comparison": _contact_comparison(cpu_contacts, gpu_contacts),
+        "cpu_contact_geom_pairs": contact_geom_pair_counts(cpu_contacts),
+        "warp_contact_geom_pairs": contact_geom_pair_counts(gpu_contacts),
+        "contact_geom_pairs_match": (
+            contact_geom_pair_counts(cpu_contacts) == contact_geom_pair_counts(gpu_contacts)
+        ),
         "cpu_contacts": cpu_contacts,
         "warp_contacts": gpu_contacts,
         "backend": backend.report(),

@@ -31,6 +31,86 @@ onset, manifold, force, and tactile artifacts are in
 This CPU pass authorizes controlled CPU-versus-Warp 2D-flex validation only. It
 does not yet authorize N=1000, performance claims, production integration, or RL.
 
+## Phase IV: 2D OBJ rigid-flex Warp gate
+
+The controlled Warp result is **Outcome C — CPU 2D works, Warp still differs**.
+The 2D representation does solve the tetrahedral false-contact failure: at 20 mm
+separation, CPU MuJoCo 3.3.1, CPU MuJoCo 3.11.0, and stock MuJoCo Warp 3.11.0 all
+produce zero contacts, zero constraint rows, and zero touch. Quasi-static onset
+agrees to a `7.62939453125e-10 m` inside-contact resolution.
+
+At 0.5 mm penetration, matching-version CPU MuJoCo 3.11.0 and Warp both produce
+3 contacts/12 rows, with touch `0.896183136` and `0.896181107` respectively.
+CPU MuJoCo 3.3.1 produces the same manifold but touch `0.312364754`, so a separate
+MuJoCo-version force-law change already prevents shallow-force equivalence to the
+original study runtime.
+
+The deeper contact gate is decisively negative. At 2 mm penetration CPU 3.11.0
+produces 13 contacts/52 rows and touch `9.719067013`; Warp produces 10 contacts/40
+rows and touch `9.119109154`. Loading the exterior as direct 2D triangles therefore
+does not close the external manifold gap previously observed after the 3D internal
+kernel was guarded.
+
+At this checkpoint the requested hard gate stopped the five-fixture and later
+tests. The user subsequently adopted CPU MuJoCo 3.11 as the revised reference,
+accepted 6.5% total-touch error, and explicitly authorized the exact five-fixture
+and full N=500 comparisons. Those later results are recorded below.
+
+## Phase IV: revised CPU 3.11/Warp 3.11 acceptance tests
+
+On 2026-08-24, the exact five fixtures failed the revised gate. At the common
+physical poses,
+CPU/Warp contact counts, constraint rows, and total-touch errors are:
+
+| Fixture | CPU contacts/rows | Warp contacts/rows | Total-touch error | Onset shift |
+|---|---:|---:|---:|---:|
+| Fingertip | 12/48 | 0/0 | 100.000% | -2.061087 mm |
+| Palm | 12/36 | 2/6 | 7.667% | -0.000029 mm |
+| Deepest concavity | 6/18 | 1/3 | 24.761% | +0.000007 mm |
+| Macro feature | 6/18 | 1/3 | 14.379% | -0.000007 mm |
+| Roughness feature | 6/18 | 1/3 | 9.434% | +0.000006 mm |
+
+Every fixture exceeds 6.5%, every common-pose manifold differs, and the fingertip
+also fails the 0.10 mm onset gate. Repeating with MULTICCD and NATIVECCD disabled
+in both backends gives effectively the same result.
+
+The complete project model cannot be transferred to MuJoCo Warp 3.11 with native
+MuJoCo 3.11 collision defaults because its existing non-zero geom-pair margin is
+unsupported while MULTICCD is enabled. The full N=500 comparison therefore used
+CPU MuJoCo 3.11.0 and MuJoCo Warp 3.11.0 with MULTICCD/NATIVECCD disabled in both,
+leaving geometry, flex radius, and per-contact parameters unchanged.
+
+The directly settled 2D control has 99/99 contacts at transfer but no active touch
+channels. The decisive active test instead settles the established original 3D
+N=500 state for 200 CPU steps, imports the identical state into the exact 2D model,
+and transfers that forwarded 2D state to Warp. Initial CPU/Warp state is essentially
+exact: 101/101 contacts, 431/431 constraint rows, nine active sensors with Jaccard
+1.0, and total touch 527.817936 versus 527.817939.
+
+After one matched step, CPU/Warp results are:
+
+| Metric | Result |
+|---|---:|
+| Contacts | 101 / 55 |
+| Constraint rows | 431 / 247 |
+| qpos max error | 0.000509091 |
+| qvel max error | 0.271492 |
+| Object position error | 0.019890 mm |
+| Object orientation error | 0.033614 degrees |
+| Object linear-velocity error | 0.009935 |
+| Object angular-velocity error | 0.293339 |
+| CPU / Warp total touch | 527.817936 / 736.288216 |
+| Total-touch relative error | 39.4966% |
+| Touch max error / RMSE | 128.3781 / 8.21601 |
+| Correlation / cosine | 0.727854 / 0.731162 |
+| Active sensors / Jaccard | 9 vs 10 / 0.9 |
+
+This is a decisive N=500 failure, not a marginal extension of the 6.17% primitive
+probe result. N=1000, performance benchmarks, all-24 preparation, and RL were not
+run because the task explicitly gates them on acceptable N=500 parity. Durable
+JSON, CSV, decision, and final-report artifacts are under
+`generated/rigid_flex_2d_validation/`. Production flex rejection remains correct.
+
 ## Scope and conclusion
 
 The original Phase-I portion of this report validates the direct MuJoCo Warp + CUDA

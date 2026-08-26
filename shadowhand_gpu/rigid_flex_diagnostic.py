@@ -243,6 +243,13 @@ def _state_snapshot(
     object_qpos = _object_qpos_address(mujoco, model)
     object_joint = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, "object:joint")
     object_qvel = int(model.jnt_dofadr[object_joint])
+    cpu_object_qpos = np.asarray(cpu_data.qpos[object_qpos : object_qpos + 7], dtype=np.float64)
+    warp_object_qpos = np.asarray(warp_data.qpos[object_qpos : object_qpos + 7], dtype=np.float64)
+    cpu_quaternion = cpu_object_qpos[3:] / np.linalg.norm(cpu_object_qpos[3:])
+    warp_quaternion = warp_object_qpos[3:] / np.linalg.norm(warp_object_qpos[3:])
+    quaternion_dot = abs(float(np.dot(cpu_quaternion, warp_quaternion)))
+    cpu_object_qvel = np.asarray(cpu_data.qvel[object_qvel : object_qvel + 6], dtype=np.float64)
+    warp_object_qvel = np.asarray(warp_data.qvel[object_qvel : object_qvel + 6], dtype=np.float64)
     return {
         "qpos": error_metrics(cpu_data.qpos, warp_data.qpos).to_dict(),
         "qvel": error_metrics(cpu_data.qvel, warp_data.qvel).to_dict(),
@@ -254,6 +261,20 @@ def _state_snapshot(
             cpu_data.qvel[object_qvel : object_qvel + 6],
             warp_data.qvel[object_qvel : object_qvel + 6],
         ).to_dict(),
+        "physical_object_error": {
+            "position_mm": float(
+                np.linalg.norm(warp_object_qpos[:3] - cpu_object_qpos[:3]) * 1000.0
+            ),
+            "orientation_deg": float(
+                np.degrees(2.0 * np.arccos(np.clip(quaternion_dot, 0.0, 1.0)))
+            ),
+            "linear_velocity": float(
+                np.linalg.norm(warp_object_qvel[:3] - cpu_object_qvel[:3])
+            ),
+            "angular_velocity": float(
+                np.linalg.norm(warp_object_qvel[3:] - cpu_object_qvel[3:])
+            ),
+        },
         "touch": tactile_metrics(
             cpu_touch,
             warp_touch,
@@ -264,6 +285,10 @@ def _state_snapshot(
             "cpu": int(cpu_data.ncon),
             "warp": int(warp_data.ncon),
             "stored_contact_details_per_backend": 128,
+        },
+        "constraint_rows": {
+            "cpu": int(cpu_data.nefc),
+            "warp": int(warp_data.nefc),
         },
         "contact_comparison": _contact_comparison(cpu_contacts, warp_contacts),
         "cpu_contacts": cpu_contacts,
@@ -288,15 +313,38 @@ def compare_rigid_flex_fixture(
     contacts_per_world: int = 8192,
     constraints_per_world: int = 4096,
     experimental_tet_guard: bool = False,
+    reference_compat: bool = True,
+    seed_xml_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Compare one controlled old rigid-flex rollout and retain divergence evidence."""
     import mujoco
 
     mjw, _, wp = _warp_bindings()
-    model, model_report = load_project_model(xml_path, reference_compat=True)
+    model, model_report = load_project_model(xml_path, reference_compat=reference_compat)
     if model_report.object_collision_representation != "rigid_flex":
         raise ValueError("controlled old-path diagnostic requires a compiled rigid flex")
-    cpu_data = _configure_fixture(mujoco, model, fixture)
+    seed_model_report = None
+    if seed_xml_path is None:
+        cpu_data = _configure_fixture(mujoco, model, fixture)
+    else:
+        seed_model, seed_model_report = load_project_model(
+            seed_xml_path, reference_compat=reference_compat
+        )
+        if (int(seed_model.nq), int(seed_model.nv), int(seed_model.nu)) != (
+            int(model.nq), int(model.nv), int(model.nu)
+        ):
+            raise ValueError("seed and comparison models have different state/control sizes")
+        seed_data = _configure_fixture(mujoco, seed_model, fixture)
+        cpu_data = mujoco.MjData(model)
+        cpu_data.qpos[:] = seed_data.qpos
+        cpu_data.qvel[:] = seed_data.qvel
+        cpu_data.act[:] = seed_data.act
+        cpu_data.ctrl[:] = seed_data.ctrl
+        cpu_data.qacc_warmstart[:] = seed_data.qacc_warmstart
+        cpu_data.mocap_pos[:] = seed_data.mocap_pos
+        cpu_data.mocap_quat[:] = seed_data.mocap_quat
+        cpu_data.time = seed_data.time
+        mujoco.mj_forward(model, cpu_data)
     layout = build_sensor_layout(model)
     touch_indices = np.asarray(layout.touch_data_indices, dtype=np.int64)
     touch_sites = _touch_site_names(mujoco, model, layout)
@@ -373,6 +421,8 @@ def compare_rigid_flex_fixture(
             "invariant": "rigid-body edge length; zero relative edge velocity",
         },
         "experimental_tet_internal_guard": experimental_tet_guard,
+        "reference_compat": reference_compat,
+        "seed_model": None if seed_model_report is None else seed_model_report.to_dict(),
         "initial_cpu_contact_count": initial_cpu_contact_count,
         "first_cpu_contact_step": first_cpu_contact_step,
         "first_warp_contact_step": first_warp_contact_step,
@@ -391,12 +441,14 @@ def compare_all_rigid_flex_fixtures(
     xml_path: str | Path,
     *,
     experimental_tet_guard: bool = False,
+    reference_compat: bool = True,
 ) -> dict[str, Any]:
     return {
         fixture.name: compare_rigid_flex_fixture(
             xml_path,
             fixture,
             experimental_tet_guard=experimental_tet_guard,
+            reference_compat=reference_compat,
         )
         for fixture in RIGID_FLEX_FIXTURES
     }

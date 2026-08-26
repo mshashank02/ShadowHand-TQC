@@ -1,0 +1,369 @@
+{
+  "body_position": [
+    1.0,
+    0.87,
+    0.46
+  ],
+  "cache_key": "a22bb0a0de0df202ee8a23b5b0746371b1c7f6a682ed7e813f652dd8fe08988e",
+  "cache_reused": true,
+  "collision_geom_names": [
+    "object_collision_000",
+    "object_collision_001",
+    "object_collision_002",
+    "object_collision_003",
+    "object_collision_004",
+    "object_collision_005",
+    "object_collision_006",
+    "object_collision_007",
+    "object_collision_008",
+    "object_collision_009",
+    "object_collision_010",
+    "object_collision_011",
+    "object_collision_012",
+    "object_collision_013",
+    "object_collision_014",
+    "object_collision_015",
+    "object_collision_016",
+    "object_collision_017",
+    "object_collision_018",
+    "object_collision_019",
+    "object_collision_020",
+    "object_collision_021",
+    "object_collision_022",
+    "object_collision_023",
+    "object_collision_024",
+    "object_collision_025",
+    "object_collision_026",
+    "object_collision_027",
+    "object_collision_028",
+    "object_collision_029",
+    "object_collision_030",
+    "object_collision_031",
+    "object_collision_032",
+    "object_collision_033",
+    "object_collision_034",
+    "object_collision_035"
+  ],
+  "collision_mesh_assets": [
+    "custom_object_collision_piece_000",
+    "custom_object_collision_piece_001",
+    "custom_object_collision_piece_002",
+    "custom_object_collision_piece_003",
+    "custom_object_collision_piece_004",
+    "custom_object_collision_piece_005",
+    "custom_object_collision_piece_006",
+    "custom_object_collision_piece_007",
+    "custom_object_collision_piece_008",
+    "custom_object_collision_piece_009",
+    "custom_object_collision_piece_010",
+    "custom_object_collision_piece_011",
+    "custom_object_collision_piece_012",
+    "custom_object_collision_piece_013",
+    "custom_object_collision_piece_014",
+    "custom_object_collision_piece_015",
+    "custom_object_collision_piece_016",
+    "custom_object_collision_piece_017",
+    "custom_object_collision_piece_018",
+    "custom_object_collision_piece_019",
+    "custom_object_collision_piece_020",
+    "custom_object_collision_piece_021",
+    "custom_object_collision_piece_022",
+    "custom_object_collision_piece_023",
+    "custom_object_collision_piece_024",
+    "custom_object_collision_piece_025",
+    "custom_object_collision_piece_026",
+    "custom_object_collision_piece_027",
+    "custom_object_collision_piece_028",
+    "custom_object_collision_piece_029",
+    "custom_object_collision_piece_030",
+    "custom_object_collision_piece_031",
+    "custom_object_collision_piece_032",
+    "custom_object_collision_piece_033",
+    "custom_object_collision_piece_034",
+    "custom_object_collision_piece_035"
+  ],
+  "contact_parameters": {
+    "conaffinity": "1",
+    "condim": "3",
+    "contype": "1",
+    "friction": "1 0.005 0.0001",
+    "gap": "0",
+    "margin": "0",
+    "priority": "0",
+    "solimp": "0.9 0.95 0.001 0.5 2",
+    "solref": "0.02 1"
+  },
+  "conversion_manifest": "/home/mshashank02/Projects/ShadowHand-TQC/generated/rigid_mesh_cache/obj_size-large_ar-high_macro-high_rough-high-a22bb0a0de0df202.conversion.json",
+  "conversion_parameters": {
+    "compact_boundary_vertices": true,
+    "output_format": "wavefront_obj",
+    "preserve_coordinates": true
+  },
+  "converted_bbox": {
+    "dimensions": [
+      2.17316957999278,
+      1.9686451094815223,
+      3.8654560900000003
+    ],
+    "max": [
+      1.0470450801364057,
+      0.95348955,
+      1.98192064
+    ],
+    "min": [
+      -1.1261244998563744,
+      -1.0151555594815223,
+      -1.88353545
+    ]
+  },
+  "converted_hash": "e8fd23e33daf4bd61f71ee31d9e3ae8cdf5bd574e411fc608f5e9094def0d70c",
+  "converted_mesh": "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/obj_size-large_ar-high_macro-high_rough-high-a22bb0a0de0df202.obj",
+  "converter_version": "gmsh-tet-boundary-v1",
+  "decomposition": {
+    "algorithm": "CoACD",
+    "algorithm_version": "1.0.11",
+    "all_pieces_same_body": "object",
+    "cache_key": "1c07a4d2506dd251a7ff42e6ad54106153f901726564845895959e7ed810c47e",
+    "cache_reused": true,
+    "collision_piece_units": "metres",
+    "converter_version": "coacd-real-metric-cache-v1",
+    "generated_piece_paths": [
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_000.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_001.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_002.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_003.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_004.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_005.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_006.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_007.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_008.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_009.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_010.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_011.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_012.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_013.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_014.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_015.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_016.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_017.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_018.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_019.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_020.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_021.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_022.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_023.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_024.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_025.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_026.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_027.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_028.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_029.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_030.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_031.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_032.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_033.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_034.obj",
+      "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/custom_object_1c07a4d2506dd251_piece_035.obj"
+    ],
+    "independent_dynamic_bodies": 0,
+    "manifest": "/home/mshashank02/Projects/ShadowHand-TQC/generated/rigid_mesh_cache/decomposition/eaa78c4a15423bf7/1c07a4d2506dd251a7ff42e6ad54106153f901726564845895959e7ed810c47e/manifest.json",
+    "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "parameters": {
+      "apx_mode": "ch",
+      "decimate": false,
+      "extrude": false,
+      "extrude_margin": 0.01,
+      "max_ch_vertex": 256,
+      "max_convex_hull": -1,
+      "mcts_iterations": 100,
+      "mcts_max_depth": 3,
+      "mcts_nodes": 20,
+      "merge": true,
+      "pca": false,
+      "preprocess_mode": "off",
+      "preprocess_resolution": 50,
+      "real_metric": true,
+      "resolution": 1000,
+      "seed": 20260812,
+      "threshold_m": 0.0014
+    },
+    "piece_count": 36,
+    "piece_hashes": [
+      "bb74be13fff292a096f648e00150552a8e912f63775dc244bfa278337d98d630",
+      "cdc5a4c03f9a6d894447647db0550d8ad64171c91183edf39cccf2ad18442ff2",
+      "2caf0b66c00aa65c94090f447512a795c6e28f3ef95b436008af714239d6e800",
+      "50217f9c71c76d53440be0f0699b95f1c776e33be6b2993261c4be361cb2db19",
+      "33187ecea0f943d040d788ca6df097b2f6d351e52dab34dc4df634ec8485261e",
+      "8bc3414203a0619b752f6e67ddb1aa9e268c5c9c0bd9ab2df82fcafb5dd7fae7",
+      "4d3e14e6b62f2137f89723e19e2e98ac5d29759cf99dff7755bd9e86849da85d",
+      "433ffc48a6d37a0b9076e1bd44e27faf7196b16aded2af0211233125ae75e568",
+      "8fce63b51ee57f696b5760a1c99cbcceae9cef04238c3f41b6d424baa155e327",
+      "1f3d0ecc0d33d4f72e3836b78ba2a7b504bc0a8171579c7b521a1c6130804dd5",
+      "93fdfc55780c736b8844b1ff5b1c4d1a36a3caf9fd805e277d56a49038452779",
+      "52f708481bec485364bb1b05bbe2c9fd5273f8d43880e9427c7595d114db86db",
+      "8883445921900d9167e8a1001d6643fe2c096a6d8322ff64045f3bbc86d7e790",
+      "7eae81303f9e9926d671ce26463c2c45c03d53ff9ce2d5f60bb54f3805c555e4",
+      "4c7dcd5f493457a975583f834dbe5683f0a9b382c675cf95b1030c030dad5c81",
+      "ca3c39c3a585d6d0896bfbcb7171ca919099efa55de8a0de5ed6b0c426d1c735",
+      "1eb80ffb67f562a2e8123ad38e07314ba206dbb327398e7478278eb2ebf067fc",
+      "bb777605634efc8be76a468daae99028f0382571417ac13b6f15e1a872db8504",
+      "d2c2a2dfae4306688d356af39bf7211363410bfda043c720d791c428988c0a5d",
+      "8af18d43c89566aa664cd44c261f6a7354f98ec3474bf904c9677365b5136a1e",
+      "d9fc76fe537fd7b4ec96ce7b039c49b1b70f44847fb90b78462f82b985ab69e8",
+      "8bfb5c0eecad0a1961ded04683b75b2514c4133e96936a8dfce027224e91c3c8",
+      "b41ff8dbdcc03035e9b2f5d67a4580a39636e1ef2ef1570c2ff89740477cf109",
+      "4e7fdb85092797c2dab4e3b801a43d41c60ce5e6294a8b7a2258db8802519da4",
+      "61a5a762cff707ff7e85b5f1b4ac09f773e401e6e262f3b34d2f8e3240a88a76",
+      "e5f3cff207f8cf4821fe60a5f98197fc6c45984ae36315425c1065b19a26eb88",
+      "439c6a4d06b87b5d1d5e2b251b106b810c5b643e85ec44488144ebe4a3f8b7b6",
+      "6d593069c0d217243cd0c7ad1ad58fd9317dfb77b6e4cc87b34a65865d4784e5",
+      "b6a8dd790b622a8bd17672eb5c3b30604882968a43fec758b477736b6d9a10ea",
+      "275f862fd7fb18a40616f83d14030d8a9b66d1399b087bc2041ff553b35229b5",
+      "440fe0ab3051527bbb97b38ed43071e80c43bc4e5317f24ccb8eb96ec2562a69",
+      "c333c6e2ec16c6a3b2fc8260926de5cd19a28049fe95bde47b821cd12a2aa5b8",
+      "c0e5fb54deb0b738bbdd8f9edd6b4da7e8a9ef6643dd08d6319097477d7c7f37",
+      "fd8d0d01456cd6b71f6afd3bf7edd699e142854c057306080a9ffd8753eaeb42",
+      "2e4bdd834f8de6afa530848cc498ca84a5c56eceb85534447282cc9885f48eaf",
+      "20e4eb6870954b76b10ed0848d6bd1aa9757fa81e0934776268258a492229dfc"
+    ]
+  },
+  "diaginertia": [
+    0.0030517578125,
+    0.0030517578125,
+    0.0030517578125
+  ],
+  "free_joint": "object:joint",
+  "inertial_position": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mass": 0.9765625,
+  "original_visual": {
+    "collision_disabled": true,
+    "mesh": "/home/mshashank02/Projects/ShadowHand-TQC/generated/convex_decomposition_validation/contact_models/stls/hand/obj_size-large_ar-high_macro-high_rough-high-a22bb0a0de0df202.obj",
+    "mesh_scale": [
+      0.03125,
+      0.03125,
+      0.03125
+    ]
+  },
+  "representation": "convex_decomposition",
+  "rigid_collision_representation": "convex_decomposition",
+  "scaled_geometry": {
+    "aspect_ratios_to_max_dimension": [
+      0.5622026300117097,
+      0.5092918050665328,
+      1.0
+    ],
+    "bbox_center": [
+      -0.0012356159331245106,
+      -0.0009635313981487849,
+      0.0015372685937499984
+    ],
+    "bbox_dimensions": [
+      0.06791154937477438,
+      0.06152015967129757,
+      0.12079550281250001
+    ],
+    "bbox_max": [
+      0.03272015875426268,
+      0.0297965484375,
+      0.06193502
+    ],
+    "bbox_max_abs_error": 0.0,
+    "bbox_min": [
+      -0.0351913906205117,
+      -0.03172361123379757,
+      -0.0588604828125
+    ],
+    "boundary_edge_count": 0,
+    "connected_components": 1,
+    "converted_vertex_count": 1666,
+    "enclosed_volume": 0.00021343804019505723,
+    "geometry_validation_passed": true,
+    "mesh_scale": [
+      0.03125,
+      0.03125,
+      0.03125
+    ],
+    "nonmanifold_edge_count": 0,
+    "removed_internal_face_pairs": 15440,
+    "signed_volume": 0.00021343804019505723,
+    "source_bbox_dimensions": [
+      2.17316957999278,
+      1.9686451094815223,
+      3.8654560900000003
+    ],
+    "source_bbox_max": [
+      1.0470450801364057,
+      0.95348955,
+      1.98192064
+    ],
+    "source_bbox_min": [
+      -1.1261244998563744,
+      -1.0151555594815223,
+      -1.88353545
+    ],
+    "source_element_count": 8552,
+    "source_element_type_counts": {
+      "4": 8552
+    },
+    "source_node_count": 2387,
+    "source_tetrahedral_volume": 6.99393770111162,
+    "source_tetrahedron_count": 8552,
+    "source_volume_centroid": [
+      -0.07881659162761732,
+      -0.022207668948647813,
+      0.052960154276858476
+    ],
+    "surface_area": 0.019327824031630497,
+    "triangle_count": 3328,
+    "unique_edge_count": 4992,
+    "volume_abs_error": 1.509903313490213e-14,
+    "volume_centroid": [
+      -0.0024630184883630522,
+      -0.0006939896546452461,
+      0.0016550048211518278
+    ],
+    "volume_centroid_l2_error": 3.5279345608447034e-16,
+    "volume_relative_error": 2.1588744109777074e-15,
+    "watertight": true,
+    "winding_mismatch_edge_count": 0
+  },
+  "source_bbox": {
+    "dimensions": [
+      2.17316957999278,
+      1.9686451094815223,
+      3.8654560900000003
+    ],
+    "max": [
+      1.0470450801364057,
+      0.95348955,
+      1.98192064
+    ],
+    "min": [
+      -1.1261244998563744,
+      -1.0151555594815223,
+      -1.88353545
+    ]
+  },
+  "source_format": {
+    "binary": true,
+    "data_size": 8,
+    "endian": "little",
+    "version": "2.2"
+  },
+  "source_hash": "eaa78c4a15423bf7346f120e1802f0201ee18711834cd703e6a4ef5f98e2b3ef",
+  "source_mesh": "/home/mshashank02/Projects/ShadowHand-TQC/study_objects/sphere_study_v1/obj_size-large_ar-high_macro-high_rough-high.msh",
+  "unmapped_rigid_flex_parameters": {
+    "internal": "internal tetrahedral faces were removed during conversion",
+    "radius": "no exact native mesh-geom equivalent",
+    "selfcollide": "not applicable to a single rigid geom"
+  },
+  "visual_mesh_asset": "custom_object_visual_mesh"
+}

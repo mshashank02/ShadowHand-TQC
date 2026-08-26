@@ -34,6 +34,7 @@ def benchmark_one(
     device: str,
     use_cuda_graphs: bool,
 ) -> dict[str, Any]:
+    free_before_bytes, total_bytes = torch.cuda.mem_get_info(device)
     backend = MujocoWarpBackend(
         xml_path,
         worlds=worlds,
@@ -56,12 +57,28 @@ def benchmark_one(
     backend.synchronize()
     torch.cuda.reset_peak_memory_stats(device)
     allocated_before = torch.cuda.memory_allocated(device)
+    overflow_seen = torch.zeros((), dtype=torch.int32, device=device)
+    active_contacts_high_water = torch.zeros((), dtype=torch.int32, device=device)
+    constraints_high_water = torch.zeros((), dtype=torch.int32, device=device)
 
     start = time.perf_counter()
     for _ in range(measured_steps):
         step = task.step(actions)
+        torch.maximum(overflow_seen, backend.overflow_flags.max(), out=overflow_seen)
+        torch.maximum(
+            active_contacts_high_water,
+            backend.active_contact_counts.max(),
+            out=active_contacts_high_water,
+        )
+        torch.maximum(
+            constraints_high_water,
+            backend.constraint_counts.max(),
+            out=constraints_high_water,
+        )
     backend.synchronize()
     elapsed = time.perf_counter() - start
+    task_report = task.report()
+    free_after_bytes = task_report["backend"]["device_free_bytes"]
     return {
         "ok": True,
         "worlds": worlds,
@@ -78,7 +95,14 @@ def benchmark_one(
         "output_is_cuda": step.observations["observation"].is_cuda,
         "allocated_before_measurement_bytes": allocated_before,
         "peak_allocated_bytes": torch.cuda.max_memory_allocated(device),
-        "task": task.report(),
+        "device_total_bytes": total_bytes,
+        "device_free_before_benchmark_bytes": free_before_bytes,
+        "device_free_after_measurement_bytes": free_after_bytes,
+        "device_memory_used_delta_bytes": max(0, free_before_bytes - free_after_bytes),
+        "overflow_flags_max": int(overflow_seen.cpu()),
+        "batch_global_active_contacts_high_water": int(active_contacts_high_water.cpu()),
+        "constraints_per_world_high_water": int(constraints_high_water.cpu()),
+        "task": task_report,
     }
 
 

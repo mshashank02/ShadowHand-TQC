@@ -16,10 +16,24 @@ from shadowhand_gpu.rigid_flex_diagnostic import (
 
 
 def main() -> int:
+    import mujoco
+    import mujoco_warp as mjw
+    import warp as wp
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--xml", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--seed-xml",
+        type=Path,
+        help="settle this model, then import its matched state into the comparison model",
+    )
     parser.add_argument("--experimental-tet-guard", action="store_true")
+    parser.add_argument(
+        "--native-mujoco-311-defaults",
+        action="store_true",
+        help="retain MuJoCo 3.11 collision defaults instead of matching 3.3 defaults",
+    )
     parser.add_argument(
         "--fixture",
         choices=[fixture.name for fixture in RIGID_FLEX_FIXTURES],
@@ -33,20 +47,28 @@ def main() -> int:
                 args.xml,
                 fixture,
                 experimental_tet_guard=args.experimental_tet_guard,
+                reference_compat=not args.native_mujoco_311_defaults,
+                seed_xml_path=args.seed_xml,
             )
         }
     else:
         fixtures = compare_all_rigid_flex_fixtures(
             args.xml,
             experimental_tet_guard=args.experimental_tet_guard,
+            reference_compat=not args.native_mujoco_311_defaults,
         )
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "mujoco_version": mujoco.__version__,
+        "mujoco_warp_version": mjw.__version__,
+        "warp_version": wp.__version__,
         "xml": str(args.xml.expanduser().resolve()),
         "warning": (
             "Diagnostic-only single-body rigid-flex workaround; production remains flex-rejecting."
         ),
         "experimental_tet_internal_guard": args.experimental_tet_guard,
+        "native_mujoco_311_defaults": args.native_mujoco_311_defaults,
+        "seed_xml": None if args.seed_xml is None else str(args.seed_xml.expanduser().resolve()),
         "fixtures": fixtures,
     }
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"

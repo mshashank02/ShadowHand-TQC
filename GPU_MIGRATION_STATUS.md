@@ -1,13 +1,177 @@
 # GPU Migration Status
 
-Last updated: 2026-08-13
+Last updated: 2026-08-26
 
 ## Current phase
 
-Phase IV 2D OBJ rigid-flex experiment — CPU Outcome A: exact exterior triangles
-preserve the original 3D rigid-flex boundary/contact contract within all five
-predeclared CPU gates; MuJoCo Warp validation is now authorized but production
-remains flex-rejecting until backend parity and performance gates pass
+New native-rigid bare-CoACD experiment validated — **PASS_36**: the cached
+36-piece representation passes the model, six-fixture, N=500 one-step, and
+20-substep policy-action gates on matched MuJoCo/MuJoCo Warp 3.12.0; the cached
+87-piece representation fails the 20-substep qpos/qvel gates. The production
+default remains unchanged and full RL training has not started.
+
+## Native-rigid CoACD 3.12 checkpoint: PASS_36
+
+- Before making changes, reread `GPU_MIGRATION.md`, this status file, and every
+  existing convex-decomposition validation report, JSON, CSV, cached-model
+  manifest, and diagnostic figure. This study deliberately starts a new collision
+  definition. Historical rigid-flex results are retained as history but are not
+  reproduced, compared as a scientific gate, or pooled with these results.
+- Reused the valid cached CoACD 1.0.11 decompositions; no decomposition asset was
+  regenerated. The 36-piece cache key is
+  `1c07a4d2506dd251a7ff42e6ad54106153f901726564845895959e7ed810c47e`, and the
+  87-piece key is
+  `b2a9781ce292e94cac9d05c48db9025e8bafe895c1dfe6ecb945493d4841fb4a`.
+  Every cached piece hash was rechecked against its manifest.
+- Both compiled models pass the requested structural contract: `nflex=0`, no
+  `flexcomp`, original OBJ visual collision disabled, 36/87 convex mesh geoms on
+  the single `object` body and `object:joint` free joint, and preserved body pose,
+  mass `0.9765625`, COM, diagonal inertia, joint damping, friction, `condim`,
+  `solref`, `solimp`, masks, and priority. Every object collision geom has
+  `margin=0` and `gap=0`; the collision surface is the bare CoACD piece surface.
+- Used CPU MuJoCo 3.12.0 and MuJoCo Warp 3.12.0 with Warp 1.16.0. MuJoCo Warp
+  cannot transfer the unchanged hand model's existing non-zero-margin geom pair
+  while MULTICCD is enabled, so MULTICCD and NATIVECCD were disabled identically
+  in CPU and Warp. No object geom/contact parameter was changed.
+- The separated control reports zero CPU/Warp object contacts and zero object
+  constraint rows for both representations. Fingertip, palm, deepest-concavity,
+  macro-feature, and roughness-feature poses were each defined 0.25 mm inside that
+  representation's own CPU 3.12 onset, never relative to the historical flex.
+  All ten contact fixtures pass: maximum absolute onset difference is
+  `0.0000776 mm` for 36 pieces and `0.0005617 mm` for 87 pieces; maximum
+  total-touch error is `0.5562%`; every active-sensor Jaccard is `1.0`; contacts
+  and constraint rows agree at the evaluated poses; and no overflow occurs.
+  Full positions, normals, forces, tactile totals, maximum errors, correlation,
+  cosine similarity, active sets, and geom-pair multisets are stored in JSON, with
+  the gate summary in CSV.
+- Both CPU-settled, exactly matched N=500 one-step tests pass. For 36 pieces,
+  qpos/qvel maximum errors are `1.1815e-6` / `5.9123e-4`, touch maximum error is
+  `0.028983`, and total-touch error is `0.84721%`; CPU/Warp have 5/5 contacts and
+  48/48 rows with identical geom-pair multisets. For 87 pieces the corresponding
+  values are `1.7824e-6`, `8.7370e-4`, `0.00027897`, and `0.039516%`, with 4/4
+  contacts and 45/45 rows. Both have zero overflow.
+- The existing 20-substep policy-action gate separates the candidates. The
+  36-piece result passes with qpos `6.5188e-5`, qvel `0.0028256`, touch maximum
+  error `0.020793`, exact reward/success, matching 3/3 contacts and 39/39 rows,
+  and zero overflow. The 87-piece result fails qpos (`6.8317e-4` versus the
+  `3e-4` gate) and qvel (`0.028012` versus `0.02`), despite exact reward/success,
+  matching 2/2 contact geom pairs and 35/35 rows, zero tactile error in this pose,
+  and zero overflow. Three additional repeats confirm the 87-piece failure:
+  qpos remains about `6.81e-4`–`6.89e-4` and qvel `0.0270`–`0.0343`.
+- Geometry alone favors 87 pieces (p95/p99/max gap
+  `0.239/0.478/0.799 mm`, volume error `0.324%`) over 36
+  (`0.316/0.538/0.799 mm`, `0.443%`), but parity is the first selection criterion.
+  The formal outcome is therefore **PASS_36**, not `PASS_BOTH`.
+- Benchmarked only the parity-passing 36-piece representation, with CUDA graphs,
+  20 physics substeps, and 5 measured task steps. At 1/16/64 worlds it delivers
+  `48.87/541.78/1167.85` environment steps/s and uses approximately
+  `186.2/354.0/991.5 MB` of total device memory at report time. All benchmark
+  overflows are zero; maximum reported constraints/world are 55/84/99. The
+  87-piece model was not benchmarked because its parity prerequisite failed.
+- Durable machine-readable evidence is in
+  `generated/native_decomposition_312_validation/validation_results.json`,
+  `representation_36.json`, `representation_87.json`, `summary.csv`,
+  `fixtures.csv`, and `gpu_benchmarks.csv`; `report.md` is the concise rendered
+  conclusion. The production default was not changed, and full RL training was
+  not run.
+
+The passing 36-piece representation defines a new experiment. Before any full
+study, all 24 objects and every sensor configuration must use the new definition
+and be retrained; historical rigid-flex runs cannot be reused or pooled.
+
+## Phase IV checkpoint: revised CPU 3.11/Warp 3.11 five-fixture and N=500 gates
+
+- Following the user's explicit acceptance of the minimal 2 mm probe's 6.17%
+  total-touch difference, changed the comparison reference to matching-version
+  CPU MuJoCo 3.11.0 and set the revised total-touch tolerance to 6.5%. This does
+  not reinterpret the separate CPU 3.3.1 compatibility result.
+- Ran the unchanged fingertip, palm, deepest-concavity, macro-feature, and
+  roughness-feature fixtures on the exact same 2D OBJ rigid-flex MJCF. Native
+  MuJoCo 3.11 common-pose CPU/Warp total-touch errors are respectively 100.000%,
+  7.667%, 24.761%, 14.379%, and 9.434%. All five exceed 6.5%, and every contact
+  manifold differs. The fingertip is the most severe: onset shifts by -2.061 mm
+  and CPU's 12 contacts/48 rows become Warp 0/0.
+- Repeated the five fixtures with MULTICCD and NATIVECCD disabled in both
+  backends, matching the configuration needed by the complete project model.
+  The measured outcomes are effectively identical; no fixture passes.
+- Native MuJoCo 3.11 defaults cannot load the complete N=500 model into MuJoCo
+  Warp 3.11: Warp rejects the existing non-zero geom-pair margin while MULTICCD
+  is enabled. The deployable full comparison therefore used MuJoCo 3.11.0 on
+  both CPU and Warp with MULTICCD/NATIVECCD disabled; geometry, flex radius, and
+  per-contact parameters were unchanged.
+- The direct 2D CPU-settled control transfers with 99/99 contacts but has zero
+  active tactile channels, so it cannot answer the tactile question. For the
+  decisive test, settled the original 3D N=500 model for the established 200
+  CPU steps, copied the identical qpos/qvel/control/warm-start state into the
+  2D model, forwarded it, then transferred that active 2D state to Warp.
+- At transfer, CPU and Warp have 101/101 contacts, 431/431 constraint rows, nine
+  active sensors with Jaccard 1.0, total touch 527.817936 versus 527.817939,
+  cosine 1.0, and negligible state error. This proves the state transfer itself
+  is not the source of the later difference.
+- After one matched step, CPU/Warp have 101/55 contacts and 431/247 constraint
+  rows. Total touch is 527.817936 versus 736.288216, a 39.4966% relative error;
+  maximum touch error is 128.3781, RMSE 8.21601, correlation 0.727854, cosine
+  0.731162, and active Jaccard 0.9 (9 versus 10 active channels). Aggregate qpos
+  and qvel maximum errors are 0.000509091 and 0.271492. Physical object errors
+  are 0.019890 mm position, 0.033614 degrees orientation, 0.009935 linear
+  velocity, and 0.293339 angular velocity.
+- Classified the revised gate as a clear failure. The isolated 2 mm result was
+  not representative of hand contact. Per the task ordering, N=1000, GPU and
+  complete-loop benchmarks, all-24 preparation, and RL were not run.
+- Durable evidence is under `generated/rigid_flex_2d_validation/`: the two
+  five-fixture JSONs, `cpu_warp_2d_five_fixture_summary.csv`, the unseeded and
+  active-seeded N=500 JSONs, revised `warp_decision.json`, and `final_report.md`.
+
+Commands used the pinned `/tmp/shadowhand-mjw.revised-311` environment with CPU
+MuJoCo 3.11.0, MuJoCo Warp 3.11.0, Warp 1.16.0, and CUDA. The five-fixture command
+was `debug_rigid_flex_2d.py five-fixtures`; N=500 used
+`diagnose_rigid_flex.py --fixture settled_contact`, including `--seed-xml` for
+the active established state.
+
+Final answer remains no: the 2D OBJ rigid flex is a valid CPU substitute and
+avoids both tetrahedral Warp paths, but it does not provide matching-version
+CPU/Warp contact or tactile parity on the exact fixtures or the full N=500 hand.
+
+## Phase IV checkpoint: controlled Warp result and stop decision
+
+- Built a minimal sphere-probe model from the same audited OBJ, 0.03125 scale,
+  1.25 mm flex radius, explicit object mass/inertia/damping, and unchanged contact
+  parameters. No tetrahedral guard or backend-specific MJCF was used.
+- The 20 mm separated hard control passes: CPU MuJoCo 3.3.1, CPU MuJoCo 3.11.0,
+  and stock MuJoCo Warp 3.11.0 each report zero contacts, zero constraint rows, and
+  zero touch. This confirms that `dim=2` avoids the 2674-contact tetrahedral
+  internal-kernel failure.
+- A high-resolution normal-approach sweep brackets CPU and Warp onset at the same
+  surface to Warp float resolution. The narrowest monotone Warp inside-contact
+  sample is `7.62939453125e-10 m` inside the analytical surface; all outside
+  samples remain contact-free.
+- At 0.5 mm penetration, CPU 3.11.0 and Warp agree on 3 contacts/12 rows and touch
+  differs by only `2.03e-6` (`0.896183136` versus `0.896181107`). CPU 3.3.1 also
+  has 3/12 but touch is `0.312364754`, exposing a large MuJoCo 3.3→3.11 force-law
+  change for 2D flex even when the contact manifold agrees.
+- At the decisive 2 mm penetration, CPU 3.11.0 produces 13 contacts/52 rows and
+  touch `9.719067013`; Warp produces 10 contacts/40 rows and touch `9.119109154`.
+  The `0.599957859` touch difference and missing three contacts/twelve rows are a
+  material deep-contact manifold failure. The same 10-contact Warp result observed
+  after guarding the old 3D path is not repaired by supplying the surface directly.
+- At this checkpoint the experiment was classified as **Outcome C — CPU 2D works,
+  Warp still differs**, and the later phases were initially stopped. The user
+  subsequently accepted a revised 6.5% matching-version tolerance and explicitly
+  authorized the five-fixture and N=500 runs; their results are recorded in the
+  newer checkpoint above. No new performance or training-speed claim is made.
+- Added durable approach/contact/tactile CSVs, `warp_decision.json`, and
+  `final_report.md` under `generated/rigid_flex_2d_validation/`, plus focused
+  recorded-artifact and surface-semantics tests in
+  `tests/test_rigid_flex_2d_validation.py`.
+
+Commands: `debug_rigid_flex_2d.py prepare|cpu|warp` using CPU MuJoCo 3.3.1,
+matching CPU MuJoCo 3.11.0, MuJoCo Warp 3.11.0, and Warp 1.16.0; then
+`python -m object_conversion.report_rigid_flex_2d_validation`.
+
+Checkpoint answer: the 2D OBJ rigid flex is a valid CPU representation under the
+declared gates and does avoid the problematic tetrahedral path, but it cannot
+replace the original model for GPU training because stock Warp still fails deeper
+2D contact-manifold parity. The later revised tests above strengthen this result.
 
 ## Phase IV checkpoint: 2D flex semantics and CPU representation gate
 

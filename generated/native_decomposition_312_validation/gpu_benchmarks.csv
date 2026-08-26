@@ -1,0 +1,4 @@
+representation,pieces,worlds,environment_steps_per_second,physics_world_steps_per_second,all_world_reset_seconds,allocated_before_measurement_bytes,peak_allocated_bytes,device_memory_used_delta_bytes,device_used_at_report_bytes,batch_global_active_contacts_high_water,constraints_per_world_high_water,overflow_flags_max
+36,36,1,48.870129926765436,977.4025985353087,0.1437057370058028,6656,20480,0,186187776,7,55,0
+36,36,16,541.7757379618321,10835.514759236641,0.24163468899496365,8704,92160,169869312,353959936,108,84,0
+36,36,64,1167.8482188896926,23356.964377793855,0.49564898399694357,17408,331776,639631360,991494144,460,99,0
