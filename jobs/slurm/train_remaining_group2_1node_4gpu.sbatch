@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=bewv-dtai-gh
-#SBATCH --job-name=shadow16-r3
+#SBATCH --job-name=shadow16-r2
 #SBATCH --partition=ghx4
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -8,8 +8,8 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=0
 #SBATCH --time=30:00:00
-#SBATCH --output=slurm-%x-%j.out
-#SBATCH --error=slurm-%x-%j.err
+#SBATCH --output=slurm_logs/slurm-%x-%j.out
+#SBATCH --error=slurm_logs/slurm-%x-%j.err
 
 set -uo pipefail
 
@@ -25,10 +25,10 @@ export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl SDL_VIDEODRIVER=dummy
 export WANDB_CONSOLE=off PYTHONUNBUFFERED=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 
 CONFIGS=(
-  "large|obj_size_large_ar_high_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-large_ar-high_macro-low_rough-high.msh"
-  "medium|obj_size_medium_ar_high_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-medium_ar-high_macro-low_rough-high.msh"
-  "small|obj_size_small_ar_high_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-small_ar-high_macro-low_rough-high.msh"
-  "large|obj_size_large_ar_low_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-large_ar-low_macro-low_rough-high.msh"
+  "small|obj_size_small_ar_high_macro_high_rough_low|study_objects/sphere_study_v1/obj_size-small_ar-high_macro-high_rough-low.msh"
+  "large|obj_size_large_ar_low_macro_high_rough_low|study_objects/sphere_study_v1/obj_size-large_ar-low_macro-high_rough-low.msh"
+  "medium|obj_size_medium_ar_low_macro_high_rough_low|study_objects/sphere_study_v1/obj_size-medium_ar-low_macro-high_rough-low.msh"
+  "small|obj_size_small_ar_low_macro_high_rough_low|study_objects/sphere_study_v1/obj_size-small_ar-low_macro-high_rough-low.msh"
 )
 
 run_one() {

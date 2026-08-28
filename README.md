@@ -2,6 +2,28 @@
 
 Touch-sensor-based in-hand manipulation with Shadow Hand, trained using **TQC + HER**.
 
+## Repository layout
+
+| Path | Purpose |
+|---|---|
+| `shadowhand_gpu/` | Batched MJWarp/CUDA training package |
+| `custom_envs/`, `custom_wrappers/` | Gymnasium environments and wrappers |
+| `object_conversion/` | Mesh conversion and collision-validation tools |
+| `assets/`, `textures/`, `stls/` | Source simulation assets |
+| `study_objects/`, `objects_sphere/` | Versioned experiment inputs and manifests |
+| `tests/`, `tests_gpu/` | CPU/general and GPU-specific test suites |
+| `jobs/slurm/` | Cluster job definitions |
+| `reproducers/` | Self-contained bug reproductions and patches |
+| `media/` | Images used by reports and documentation |
+| `generated/`, `logs/`, `models/`, `runs/`, `videos/`, `wandb/` | Local/generated experiment artifacts |
+| `slurm_logs/` | Scheduler output; historical tracked logs are under `archive/` |
+
+The root intentionally retains the established Python entrypoints so existing
+commands continue to work. New reusable implementation code should go into a
+package; new cluster launchers should go into `jobs/slurm/`; and reproducible
+inputs should be kept separate from generated outputs. See
+[`docs/REPOSITORY_STRUCTURE.md`](docs/REPOSITORY_STRUCTURE.md) for conventions.
+
 ## Current Status
 
 - Supports standalone environment generation via `pipeline_generate.py`.

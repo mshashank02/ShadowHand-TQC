@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --account=bewv-dtai-gh
-#SBATCH --job-name=shadow16-r1
+#SBATCH --job-name=shadow16-r3
 #SBATCH --partition=ghx4
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -8,8 +8,8 @@
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=0
 #SBATCH --time=30:00:00
-#SBATCH --output=slurm-%x-%j.out
-#SBATCH --error=slurm-%x-%j.err
+#SBATCH --output=slurm_logs/slurm-%x-%j.out
+#SBATCH --error=slurm_logs/slurm-%x-%j.err
 
 set -uo pipefail
 
@@ -21,19 +21,14 @@ cd "$REPO_ROOT"
 mkdir -p logs generated
 
 export PYTHONPATH=/u/smahesh1/.local/lib/python3.12/site-packages:${PYTHONPATH:-}
-export MUJOCO_GL=egl
-export PYOPENGL_PLATFORM=egl
-export SDL_VIDEODRIVER=dummy
-export WANDB_CONSOLE=off
-export PYTHONUNBUFFERED=1
-export OMP_NUM_THREADS=1
-export MKL_NUM_THREADS=1
+export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl SDL_VIDEODRIVER=dummy
+export WANDB_CONSOLE=off PYTHONUNBUFFERED=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 
 CONFIGS=(
-  "medium|obj_size_medium_ar_low_macro_high_rough_high|study_objects/sphere_study_v1/obj_size-medium_ar-low_macro-high_rough-high.msh"
-  "small|obj_size_small_ar_low_macro_high_rough_high|study_objects/sphere_study_v1/obj_size-small_ar-low_macro-high_rough-high.msh"
-  "large|obj_size_large_ar_high_macro_high_rough_low|study_objects/sphere_study_v1/obj_size-large_ar-high_macro-high_rough-low.msh"
-  "medium|obj_size_medium_ar_high_macro_high_rough_low|study_objects/sphere_study_v1/obj_size-medium_ar-high_macro-high_rough-low.msh"
+  "large|obj_size_large_ar_high_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-large_ar-high_macro-low_rough-high.msh"
+  "medium|obj_size_medium_ar_high_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-medium_ar-high_macro-low_rough-high.msh"
+  "small|obj_size_small_ar_high_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-small_ar-high_macro-low_rough-high.msh"
+  "large|obj_size_large_ar_low_macro_low_rough_high|study_objects/sphere_study_v1/obj_size-large_ar-low_macro-low_rough-high.msh"
 )
 
 run_one() {
@@ -41,7 +36,6 @@ run_one() {
   local candidate_id="n0500_a0p5_b0p2"
   local run_label="${candidate_id}_${object_id}_rigid"
   local run_root="generated/studies/sphere_v1_demo/candidates/${candidate_id}/${object_id}/rigid"
-
   mkdir -p "$run_root"
   echo "[$(hostname)] Starting ${run_label} on GPU ${gpu}"
   CUDA_VISIBLE_DEVICES="$gpu" python generate_and_train.py \

@@ -1,5 +1,28 @@
-models
-runs
-videos
-wandb
-generated
+# Python caches and local tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Runtime and experiment artifacts
+/generated/
+/generated_objs/
+/logs/
+/models/
+/runs/
+/videos/
+/wandb/
+/slurm_logs/*.out
+/slurm_logs/*.err
+/slurm-*.out
+/slurm-*.err
+
+# Local simulator/editor noise
+MUJOCO_LOG.TXT
+.DS_Store
+*.swp

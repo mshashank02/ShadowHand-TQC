@@ -11,8 +11,8 @@
 #SBATCH --gpus=1
 #SBATCH --mem=100G
 #SBATCH --time=30:00:00
-#SBATCH --output=slurm-%x-%j.out
-#SBATCH --error=slurm-%x-%j.err
+#SBATCH --output=slurm_logs/slurm-%x-%j.out
+#SBATCH --error=slurm_logs/slurm-%x-%j.err
 
 set -euo pipefail
 
