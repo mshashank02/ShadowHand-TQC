@@ -23,6 +23,50 @@ N500_XML = Path(
 )
 
 
+class TaskObservationSnapshotTests(unittest.TestCase):
+    def test_goal_keys_do_not_alias_live_simulation_state(self):
+        qpos = torch.arange(20, dtype=torch.float32).reshape(1, 20)
+        qvel = torch.zeros((1, 12), dtype=torch.float32)
+        touch = torch.zeros((1, 2), dtype=torch.float32)
+        desired = torch.arange(7, dtype=torch.float32).reshape(1, 7)
+        observations = build_task_observations(
+            qpos=qpos,
+            qvel=qvel,
+            touch=touch,
+            desired_goals=desired,
+            episode_steps=torch.zeros(1, dtype=torch.int64),
+            max_episode_steps=100,
+            robot_qpos_indices=torch.tensor([0, 1]),
+            robot_qvel_indices=torch.tensor([0, 1]),
+            object_qpos_start=5,
+            object_qvel_start=2,
+        )
+        achieved_snapshot = observations["achieved_goal"].clone()
+        desired_snapshot = observations["desired_goal"].clone()
+        embedded_snapshot = observations["observation"].clone()
+
+        qpos[:, 5:12].add_(100.0)
+        desired.add_(100.0)
+
+        torch.testing.assert_close(
+            observations["achieved_goal"], achieved_snapshot, rtol=0.0, atol=0.0
+        )
+        torch.testing.assert_close(
+            observations["desired_goal"], desired_snapshot, rtol=0.0, atol=0.0
+        )
+        torch.testing.assert_close(
+            observations["observation"], embedded_snapshot, rtol=0.0, atol=0.0
+        )
+        self.assertNotEqual(
+            observations["achieved_goal"].untyped_storage().data_ptr(),
+            qpos.untyped_storage().data_ptr(),
+        )
+        self.assertNotEqual(
+            observations["desired_goal"].untyped_storage().data_ptr(),
+            desired.untyped_storage().data_ptr(),
+        )
+
+
 @unittest.skipUnless(N500_XML.is_file(), "real generated N=500 fixture is absent")
 class TaskLogicParityTests(unittest.TestCase):
     @classmethod

@@ -213,7 +213,13 @@ def build_task_observations(
     object_qpos_start: int,
     object_qvel_start: int,
 ) -> dict[str, Tensor]:
-    achieved_goals = qpos[:, object_qpos_start : object_qpos_start + 7]
+    # Observations cross a simulation-step boundary before the trainer copies
+    # them into replay.  ``qpos`` is a zero-copy view of MuJoCo Warp state, so a
+    # plain slice here would be overwritten by the next backend step.  Keep the
+    # Dict observation internally consistent by returning snapshots for both
+    # goal keys, just as ``torch.cat`` already does for ``observation``.
+    achieved_goals = qpos[:, object_qpos_start : object_qpos_start + 7].clone()
+    desired_goals = desired_goals.clone()
     time_feature = 1.0 - episode_steps.to(qpos.dtype) / float(max_episode_steps)
     observation = torch.cat(
         (
